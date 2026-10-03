@@ -143,9 +143,9 @@ func TestScenarios(t *testing.T) {
 		// Argo CD answers 403 for an application that does not exist; the text must not claim an RBAC cause.
 		cmd := exec.Command(env.Bin, "-o", "json", "--insecure", "app", "does-not-exist")
 		cmd.Env = append(os.Environ(), "ARGOCD_SERVER="+env.argoAdr, "ARGOCD_AUTH_TOKEN="+env.token)
-		out, err := cmd.Output()
-		if ee, ok := err.(*exec.ExitError); !ok || ee.ExitCode() != 3 || !strings.Contains(string(out), `"verdict": "unknown"`) || !strings.Contains(string(ee.Stderr), "denied or does not exist") {
-			t.Fatalf("missing application: want exit 3 with a JSON unknown and the 403 wording: %v %s", err, out)
+		jout, jerr := cmd.Output()
+		if ee, ok := jerr.(*exec.ExitError); !ok || ee.ExitCode() != 3 || !strings.Contains(string(jout), `"verdict": "unknown"`) || !strings.Contains(string(ee.Stderr), "denied or does not exist") {
+			t.Fatalf("missing application: want exit 3 with a JSON unknown and the 403 wording: %v %s", jerr, jout)
 		}
 		// Same app through the tool's own --port-forward mode.
 		out := env.text(t, "app", o.Name, "--port-forward", "--context", env.Context)
