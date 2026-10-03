@@ -1,6 +1,6 @@
 package collect
 
-import "k8s.io/apimachinery/pkg/util/httpstream"
+import "k8s.io/apimachinery/pkg/util/httpstream" //nolint:staticcheck // client-go portforward still takes this Dialer type
 
 type fallbackDialer struct{ primary, secondary httpstream.Dialer }
 

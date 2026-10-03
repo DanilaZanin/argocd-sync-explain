@@ -9,6 +9,18 @@ linters:
     - unconvert
     - unparam
     - nolintlint
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters: [unparam]
+      - path: _test\.go
+        linters: [errcheck]
+        text: Body.Close
+  settings:
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintf
+        - fmt.Fprintln
 formatters:
   enable:
     - gofmt

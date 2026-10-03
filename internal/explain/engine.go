@@ -51,7 +51,7 @@ func explain(s *model.Snapshot, depth int) *Report {
 	r.Operation = classify(s, r)
 	switch r.Operation.Kind {
 	case OpQueued:
-		analyzeQueued(s, r)
+		analyzeQueued(r)
 	case OpRunning:
 		analyzeRunning(s, r)
 	case OpBackoff:
@@ -464,12 +464,12 @@ func analyzeRunning(s *model.Snapshot, r *Report) {
 		r.unknown("what the operation waits on",
 			"operation is Running but no task with hookPhase=Running is recorded and the message does not name one (it may have just started or be in the dry-run)")
 	}
-	buildPosition(s, r, results)
+	buildPosition(r, results)
 	buildPending(s, r, results)
 	opNotes(s, r)
 }
 
-func buildPosition(s *model.Snapshot, r *Report, results []model.ResourceResult) {
+func buildPosition(r *Report, results []model.ResourceResult) {
 	phases := map[string]bool{}
 	waves := map[string]bool{}
 	for _, b := range r.Blockers {
@@ -681,7 +681,7 @@ func analyzeFinished(s *model.Snapshot, r *Report) {
 	}
 }
 
-func analyzeQueued(s *model.Snapshot, r *Report) {
+func analyzeQueued(r *Report) {
 	r.Notes = append(r.Notes, Note{Code: "queued",
 		Text:   "a sync was requested (.operation is set) and the application controller has not started it yet",
 		Source: ".operation"})

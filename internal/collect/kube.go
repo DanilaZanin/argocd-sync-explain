@@ -23,9 +23,8 @@ var (
 // KubeSource reads Application and AppProject custom resources through the
 // Kubernetes API. It cannot see the resource tree or events through Argo CD.
 type KubeSource struct {
-	Dyn      dynamic.Interface
-	ArgoNS   string
-	versions map[string]string
+	Dyn    dynamic.Interface
+	ArgoNS string
 }
 
 // NewKubeSource builds a kubeconfig-only source. argoNS is the namespace of the
@@ -56,7 +55,7 @@ func (k *KubeSource) Version(ctx context.Context) (string, error) {
 	if len(l.Items) == 0 {
 		return "", &ErrUnavailable{Reason: "no argocd-server Deployment in namespace " + k.ArgoNS}
 	}
-	cs, _, _ := unstructuredSlice(l.Items[0].Object, "spec", "template", "spec", "containers")
+	cs, _ := unstructuredSlice(l.Items[0].Object, "spec", "template", "spec", "containers")
 	for _, c := range cs {
 		m, _ := c.(map[string]any)
 		img, _ := m["image"].(string)
@@ -67,17 +66,17 @@ func (k *KubeSource) Version(ctx context.Context) (string, error) {
 	return "", &ErrUnavailable{Reason: "argocd-server image has no version tag (digest-pinned)"}
 }
 
-func unstructuredSlice(obj map[string]any, path ...string) ([]any, bool, error) {
+func unstructuredSlice(obj map[string]any, path ...string) ([]any, bool) {
 	var cur any = obj
 	for _, p := range path {
 		m, ok := cur.(map[string]any)
 		if !ok {
-			return nil, false, nil
+			return nil, false
 		}
 		cur = m[p]
 	}
 	s, ok := cur.([]any)
-	return s, ok, nil
+	return s, ok
 }
 
 func decode(obj map[string]any, out any) error {

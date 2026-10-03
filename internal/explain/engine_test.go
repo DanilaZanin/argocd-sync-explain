@@ -11,9 +11,6 @@ import (
 
 var now = time.Date(2026, 10, 3, 12, 0, 0, 0, time.UTC)
 
-func tp(t time.Time) *time.Time { return &t }
-func bp(b bool) *bool           { return &b }
-
 // snap builds a snapshot from a JSON Application fragment so that tests read like the real data.
 func snap(t *testing.T, mode, appJSON string) *model.Snapshot {
 	t.Helper()
