@@ -19,13 +19,19 @@ import (
 // argocd-server pod found through the kubeconfig, like `argocd --port-forward`.
 // It returns the local address and a stop function.
 func PortForward(ctx context.Context, cfg *rest.Config, argoNS string) (string, func(), error) {
+	return PortForwardPod(ctx, cfg, argoNS, "app.kubernetes.io/name=argocd-server", 8080)
+}
+
+// PortForwardPod forwards a random local port to remotePort of the first running
+// pod matching selector in namespace ns.
+func PortForwardPod(ctx context.Context, cfg *rest.Config, argoNS, selector string, remotePort int) (string, func(), error) {
 	cs, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return "", nil, err
 	}
-	pods, err := cs.CoreV1().Pods(argoNS).List(ctx, metav1.ListOptions{LabelSelector: "app.kubernetes.io/name=argocd-server"})
+	pods, err := cs.CoreV1().Pods(argoNS).List(ctx, metav1.ListOptions{LabelSelector: selector})
 	if err != nil {
-		return "", nil, fmt.Errorf("list argocd-server pods in %s: %w", argoNS, err)
+		return "", nil, fmt.Errorf("list pods %q in %s: %w", selector, argoNS, err)
 	}
 	var pod *corev1.Pod
 	for i := range pods.Items {
@@ -36,7 +42,7 @@ func PortForward(ctx context.Context, cfg *rest.Config, argoNS string) (string, 
 		}
 	}
 	if pod == nil {
-		return "", nil, fmt.Errorf("no running argocd-server pod in namespace %s", argoNS)
+		return "", nil, fmt.Errorf("no running pod %q in namespace %s", selector, argoNS)
 	}
 	rt, upgrader, err := spdy.RoundTripperFor(cfg)
 	if err != nil {
@@ -50,7 +56,7 @@ func PortForward(ctx context.Context, cfg *rest.Config, argoNS string) (string, 
 	}
 	stop := make(chan struct{})
 	ready := make(chan struct{})
-	fw, err := portforward.NewOnAddresses(dialer, []string{"127.0.0.1"}, []string{"0:8080"}, stop, ready, io.Discard, io.Discard)
+	fw, err := portforward.NewOnAddresses(dialer, []string{"127.0.0.1"}, []string{fmt.Sprintf("0:%d", remotePort)}, stop, ready, io.Discard, io.Discard)
 	if err != nil {
 		return "", nil, err
 	}

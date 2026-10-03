@@ -404,10 +404,7 @@ func analyzeRunning(s *model.Snapshot, r *Report) {
 		results = st.SyncResult.Resources
 	}
 	waitingRefs := map[string]bool{}
-	for _, x := range results {
-		if x.HookPhase != model.PhaseRunning {
-			continue
-		}
+	for _, x := range currentTasks(s, r, results, parsed, wref, more) {
 		ref := refOfResult(x)
 		isHook := x.HookType != ""
 		b := Blocker{
@@ -637,6 +634,10 @@ func collectFailures(s *model.Snapshot, r *Report) {
 		if x.HookType != "" {
 			b.Type = "hook"
 			b.Why = fmt.Sprintf("%s hook ended with phase %s", x.HookType, orUnknown(x.HookPhase))
+		} else if isApplicationRef(ref.Group, ref.Kind) {
+			b.Type = "child-application"
+			b.Why = "applying this child Application, or waiting for its health, failed"
+			b.Health = healthFor(s, ref)
 		} else {
 			b.Type = "resource"
 			b.Why = "applying (or waiting for the health of) this resource failed"
@@ -802,4 +803,63 @@ func analyzeEvents(s *model.Snapshot, r *Report) {
 		r.Events = append(r.Events, EventInfo{Reason: e.Reason, Message: e.Message, Count: e.Count})
 		n++
 	}
+}
+
+// currentTasks picks the results the operation is waiting on now. The
+// controller names the first waiting task in the operation message and counts
+// the rest; a result can stay marked Running after its step is over (observed:
+// the Namespace created by CreateNamespace=true), so results that are not in
+// the named task's syncPhase and wave are reported as stale, not as blockers.
+func currentTasks(s *model.Snapshot, r *Report, results []model.ResourceResult, parsed bool, wref Ref, more int) []model.ResourceResult {
+	var running []model.ResourceResult
+	for _, x := range results {
+		if x.HookPhase == model.PhaseRunning {
+			running = append(running, x)
+		}
+	}
+	if !parsed {
+		return running
+	}
+	var named *model.ResourceResult
+	for i := range running {
+		if running[i].Group == wref.Group && running[i].Kind == wref.Kind && running[i].Name == wref.Name {
+			named = &running[i]
+			break
+		}
+	}
+	if named == nil {
+		return running
+	}
+	nref := refOfResult(*named)
+	nwave := waveFor(s.App, nref, named.HookType != "")
+	var keep, stale []model.ResourceResult
+	for _, x := range running {
+		w := waveFor(s.App, refOfResult(x), x.HookType != "")
+		sameWave := !isNumber(w) || !isNumber(nwave) || w == nwave
+		if x.SyncPhase == named.SyncPhase && sameWave {
+			keep = append(keep, x)
+		} else {
+			stale = append(stale, x)
+		}
+	}
+	if len(stale) > 0 {
+		var names []string
+		for _, x := range stale {
+			names = append(names, fmt.Sprintf("%s/%s (syncPhase %s)", x.Kind, x.Name, orUnknown(x.SyncPhase)))
+		}
+		r.Notes = append(r.Notes, Note{Code: "stale-running-result",
+			Text:   "results still marked Running that are not in the step the controller reports waiting on: " + strings.Join(names, ", "),
+			Source: ".status.operationState.syncResult.resources vs .status.operationState.message"})
+	}
+	if want := 1 + more; len(keep) != want {
+		r.Notes = append(r.Notes, Note{Code: "task-count-mismatch",
+			Text:   fmt.Sprintf("the controller message counts %d waiting task(s); %d matching result(s) are recorded", want, len(keep)),
+			Source: ".status.operationState.message"})
+	}
+	return keep
+}
+
+func isNumber(s string) bool {
+	_, err := strconv.ParseInt(s, 10, 64)
+	return err == nil
 }
