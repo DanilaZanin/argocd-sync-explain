@@ -9,7 +9,41 @@ that never becomes ready, and a ConfigMap in wave 1 behind it.
 
 ```
 $ argocd-sync-explain app ase-wave
-<<WAVE_OUTPUT>>
+argocd/ase-wave  sync=OutOfSync health=Progressing  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: WAITING
+  The sync operation is running and waits on: Deployment/web.
+
+Operation: running (phase=Running, automated sync, started 2026-10-03T06:48:32Z)
+  message: waiting for healthy state of apps/Deployment/web
+  position (reconstructed): phase=Sync wave=0
+    basis: reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor
+
+Blockers:
+  [waiting-on] resource Deployment/web (ns ase-wave)
+      applied by the operation; Argo CD now waits for its health to become Healthy before starting later waves or phases
+      syncPhase=Sync hookType=- hookPhase=Running wave=0
+      health: Progressing: Waiting for rollout to finish: 0 of 1 updated replicas are available...  [resource tree node health]
+      message: deployment.apps/web created
+      source: .status.operationState.syncResult.resources
+
+Pending (no result yet, 1): ConfigMap/later  waves=[1]
+    resources without a result yet; prune tasks run in reverse wave order, PruneLast adds a final wave, and hooks are not listed with waves, so this is a reconstruction, not the controller's task list
+
+Observations (context, not blockers):
+  under Deployment/web: ReplicaSet/web-957bd8ddf (ns ase-wave) health=Progressing: Waiting for rollout to finish: 0 out of 1 new replicas are available...
+  under Deployment/web: Pod/web-957bd8ddf-grhrs (ns ase-wave) health=Progressing Status Reason=Running Containers=0/1
+
+OutOfSync resources:
+  ConfigMap/later (ns ase-wave)  missing: yes (resource health is Missing)
+
+Auto-sync (enabled=true):
+  verified: automated sync is enabled (an `automated` block without `enabled` means enabled)  [.spec.syncPolicy.automated]
+  verified: an operation is already in progress; auto-sync does not start another  [.operation / .status.operationState.phase]
+
+Notes:
+  field-level differences are not shown; run `argocd app diff ase-wave`  [-]
 ```
 
 Exit codes: `0` synced, healthy, nothing pending. `2` waiting, failed or out of sync (explained). `3` unknown
@@ -57,7 +91,35 @@ Argo CD API)`, never as healthy. This is the mode when no server is configured (
 
 ```
 $ argocd-sync-explain app ase-wave --mode kubeconfig
-<<KUBECONFIG_OUTPUT>>
+argocd/ase-wave  sync=OutOfSync health=Progressing  project=default
+mode: kubeconfig (Argo CD v3.5.3)
+
+VERDICT: WAITING
+...
+Blockers:
+  [waiting-on] resource Deployment/web (ns ase-wave)
+      applied by the operation; Argo CD now waits for its health to become Healthy before starting later waves or phases
+      syncPhase=Sync hookType=- hookPhase=Running wave=0
+      health: unknown: needs the Argo CD API (status.resourceHealthSource=appTree: health is not stored in the Application)  [-]
+      message: deployment.apps/web created
+      source: .status.operationState.syncResult.resources
+
+Pending (no result yet, 1): ConfigMap/later  waves=[1]
+    resources without a result yet; prune tasks run in reverse wave order, PruneLast adds a final wave, and hooks are not listed with waves, so this is a reconstruction, not the controller's task list
+
+OutOfSync resources:
+  ConfigMap/later (ns ase-wave)  missing: unknown (OutOfSync covers missing and modified; the Application does not say which: needs the Argo CD API (status.resourceHealthSource=appTree: health is not stored in the Application))
+
+Auto-sync (enabled=true):
+  verified: automated sync is enabled (an `automated` block without `enabled` means enabled)  [.spec.syncPolicy.automated]
+  verified: an operation is already in progress; auto-sync does not start another  [.operation / .status.operationState.phase]
+
+Notes:
+  field-level differences are not shown; run `argocd app diff ase-wave`  [-]
+
+Unknown (not guessed):
+  events: unknown (needs the Argo CD API)
+  tree: unknown (needs the Argo CD API (the resource tree is served by argocd-server, not stored in the Application))
 ```
 
 Flags: `-n/--namespace` (Application namespace, default `argocd`), `--argocd-namespace` (where Argo CD runs, for
@@ -112,7 +174,49 @@ Both versions list Kubernetes v1.35 in the Argo CD tested-versions table. The to
 
 ## How it was verified
 
-<<VERIFIED>>
+All numbers below were measured on a Mac (arm64, Docker through colima, 4 CPU and 8 GB shared with other work),
+`make e2e-full`, one clean kind cluster per Argo CD version, Kubernetes v1.35.8 (kind node image pinned by
+digest, Argo CD `install.yaml` pinned by tag and sha256, an in-cluster Gitea holds the fixture repositories).
+
+| Argo CD | e2e scenarios passed | Wall time including cluster create and delete | Peak memory of the kind node container |
+|---|---|---|---|
+| v3.4.9 | 25 of 25 | 230 s | 1753 MiB |
+| v3.5.3 | 25 of 25 | 211 s | 1802 MiB |
+
+Every scenario is produced for real: a git commit, an Application, and the real controller doing what it does.
+The assertions are on the JSON output (identity and classification of the blocker), after explicit waits on
+Application states. The only fixed sleeps are 10 s twice, to prove that a window keeps auto-sync from starting,
+and 5 s after changing `argocd-cm`. The scenarios: wave waiting on an unhealthy Deployment with later tasks pending, last wave Progressing
+(not blocked), PreSync hook running, PreSync and PostSync hooks failed, hook deleted after success (not a
+blocker), prune confirmation, deny window now, no active allow window, deny window holding a manual operation,
+auto-sync absent and `enabled: false`, retry backoff and its timing, comparison error from an invalid manifest,
+unreachable repository, missing namespace, app-of-apps without and with the Application health check (child
+Progressing, child Degraded), kubeconfig-only fallback, a token that can read the parent but not the child
+Application or the project, and a revision mismatch between a running operation and the latest comparison.
+
+Other checks: 99 unit tests under `-race`, golden text and JSON files for 14 snapshots captured from real
+Argo CD v3.5.3 controllers, a test that every field the tool declares exists in the Application and AppProject
+CRDs of both versions, `golangci-lint`, `actionlint`, `shellcheck`, and a goreleaser snapshot build.
+
+Things the real runs showed, which shaped the tool:
+
+- With `CreateNamespace=true` the namespace result stays `hookPhase: Running` after its step ended. The tool
+  takes the first waiting task from the controller's own operation message and treats the other `Running`
+  results as stale.
+- A deny sync window keeps auto-sync from creating an operation at all and leaves no trace in the Application.
+  The tool computes the window itself. A manual operation in a deny window is created and held with the message
+  `Sync operation blocked by sync window`.
+- The retry time in Argo CD's own message is computed with the old retry count; the controller waits for
+  `duration * factor^retryCount` with the incremented count. The scenario observed no retry earlier than that
+  time (the second attempt started after 44 s with a 20 s base and factor 2), so the tool reports it as `not before`.
+- Without a custom health check for `argoproj.io/Application`, a parent Application finished Succeeded and
+  Healthy while its child was still Progressing.
+- A child manifest with `retry: {limit: 0}` is normalized to `retry: {}` by Argo CD and keeps the parent
+  OutOfSync.
+
+Not verified: ApplicationSet, Argo CD versions other than the two above, Kubernetes versions other than v1.35, an
+Argo CD that persists resource health in the Application (`controller.resource.health.persist: "true"`),
+Argo CD installed with a custom `application.namespaces`, and Windows.
 
 ## Develop
 

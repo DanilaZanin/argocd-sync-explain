@@ -22,7 +22,7 @@ func loadSchema(t *testing.T, file string) map[string]any {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 	zr, err := gzip.NewReader(f)
 	if err != nil {
 		t.Fatal(err)
@@ -60,7 +60,7 @@ func jsonName(f reflect.StructField) (string, bool) {
 
 // walk checks type typ against schema s and returns the problems found.
 func walk(path string, typ reflect.Type, s map[string]any) []string {
-	for typ.Kind() == reflect.Ptr {
+	for typ.Kind() == reflect.Pointer {
 		typ = typ.Elem()
 	}
 	var problems []string
