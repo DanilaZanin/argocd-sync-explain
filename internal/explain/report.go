@@ -173,7 +173,9 @@ type OutOfSyncRes struct {
 
 // Finding is one auto-sync fact with the field it came from.
 type Finding struct {
-	Text   string `json:"text"`
+	Text string `json:"text"`
+	// Blocks is true when the finding explains why no sync is started.
+	Blocks bool   `json:"blocks,omitempty"`
 	Source string `json:"source"`
 }
 

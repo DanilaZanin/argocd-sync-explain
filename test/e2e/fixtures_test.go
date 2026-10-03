@@ -83,7 +83,9 @@ spec:
 `, name, hook, wave, dp, script)
 }
 
-func childApp(name, path, extraSpec string) string {
+// childApp is a child Application manifest. It has no retry block on purpose: Argo CD
+// normalizes `retry: {limit: 0}` to `retry: {}`, which would make the parent permanently OutOfSync.
+func childApp(name, path string) string {
 	return fmt.Sprintf(`apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -97,9 +99,7 @@ spec:
   destination: {server: "https://kubernetes.default.svc", namespace: %s}
   syncPolicy:
     automated: {}
-    retry: {limit: 0}
-%s
-`, name, repoURL, path, "ase-"+strings.TrimPrefix(path, "ase-"), extraSpec)
+`, name, repoURL, path, "ase-"+strings.TrimPrefix(path, "ase-"))
 }
 
 // ---- Application ----

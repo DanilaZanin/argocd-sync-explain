@@ -98,8 +98,11 @@ func analyzeAutoSync(s *model.Snapshot, r *Report) {
 		return
 	}
 	info := &AutoSyncInfo{Verified: []Finding{}, Possible: []Finding{}}
-	v := func(text, src string) { info.Verified = append(info.Verified, Finding{text, src}) }
-	p := func(text, src string) { info.Possible = append(info.Possible, Finding{text, src}) }
+	v := func(text, src string) {
+		info.Verified = append(info.Verified, Finding{Text: text, Blocks: true, Source: src})
+	}
+	info0 := func(text, src string) { info.Verified = append(info.Verified, Finding{Text: text, Source: src}) }
+	p := func(text, src string) { info.Possible = append(info.Possible, Finding{Text: text, Source: src}) }
 
 	sp := a.Spec.SyncPolicy
 	info.Enabled = isAutomatedEnabled(sp)
@@ -109,7 +112,7 @@ func analyzeAutoSync(s *model.Snapshot, r *Report) {
 	case !info.Enabled:
 		v("automated sync is configured but disabled (enabled: false)", ".spec.syncPolicy.automated.enabled")
 	default:
-		v("automated sync is enabled (an `automated` block without `enabled` means enabled)", ".spec.syncPolicy.automated")
+		info0("automated sync is enabled (an `automated` block without `enabled` means enabled)", ".spec.syncPolicy.automated")
 	}
 
 	if a.Metadata.DeletionTimestamp != nil {
@@ -206,15 +209,15 @@ func analyzeAutoSync(s *model.Snapshot, r *Report) {
 	}
 
 	if r.SyncWindows != nil && !r.SyncWindows.CanSync {
-		v("a sync window blocks syncs now ("+r.SyncWindows.Reason+"): an automated operation started now stays held", "AppProject .spec.syncWindows")
+		v("a sync window blocks automated syncs now ("+r.SyncWindows.Reason+"): the controller does not start an auto-sync while the windows deny it, and records nothing in the Application", "AppProject .spec.syncWindows evaluated for an automated sync")
 	}
 	r.AutoSync = withPossible(info, s, r)
 }
 
 func withPossible(info *AutoSyncInfo, s *model.Snapshot, r *Report) *AutoSyncInfo {
 	a := s.App
-	p := func(text, src string) { info.Possible = append(info.Possible, Finding{text, src}) }
-	if info.Enabled && a.Status.Sync.Status == "OutOfSync" && len(info.Verified) <= 1 && r.Operation.Kind != OpRunning && r.Operation.Kind != OpQueued {
+	p := func(text, src string) { info.Possible = append(info.Possible, Finding{Text: text, Source: src}) }
+	if info.Enabled && a.Status.Sync.Status == "OutOfSync" && !anyBlocks(info) && r.Operation.Kind != OpRunning && r.Operation.Kind != OpQueued {
 		if a.Status.ReconciledAt != nil {
 			age := s.Now.Sub(*a.Status.ReconciledAt).Round(time.Second)
 			p(fmt.Sprintf("no verified constraint found; the controller may simply not have acted yet (last reconciled %s ago), or it is not running or not responsible for this Application", age), ".status.reconciledAt")
@@ -236,4 +239,13 @@ func oneLine(s string) string {
 		s = s[:300] + "..."
 	}
 	return s
+}
+
+func anyBlocks(a *AutoSyncInfo) bool {
+	for _, f := range a.Verified {
+		if f.Blocks {
+			return true
+		}
+	}
+	return false
 }

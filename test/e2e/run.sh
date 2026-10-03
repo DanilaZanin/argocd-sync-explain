@@ -39,11 +39,15 @@ sample_mem() {
 }
 
 rc=0
+tmpbin="$(mktemp -u)-argocd-sync-explain-e2e"
 for ver in "${versions[@]}"; do
   tag="${ver//./-}"
   node="ase-${tag}-control-plane"
   start="$(date +%s)"
-  cleanup() { "$here/cluster.sh" down "$ver" >/dev/null 2>&1 || true; }
+  cleanup() {
+    "$here/cluster.sh" down "$ver" >/dev/null 2>&1 || true
+    rm -f "$tmpbin"
+  }
   trap cleanup EXIT
   "$here/cluster.sh" up "$ver"
   flag="$(mktemp)"
@@ -52,8 +56,10 @@ for ver in "${versions[@]}"; do
   set +e
   (
     cd "$here"
+    # A uniquely named test binary: it cannot be mistaken for another project's e2e.test.
+    go test -c -tags e2e -o "$tmpbin" .
     ASE_E2E_VERSION="$ver" ASE_E2E_SET="$set_" ASE_BIN="$root/bin/argocd-sync-explain" \
-      go test -tags e2e -count=1 -v -timeout 40m ./...
+      "$tmpbin" -test.v -test.count=1 -test.timeout=40m
   )
   status=$?
   set -e

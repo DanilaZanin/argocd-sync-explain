@@ -210,10 +210,12 @@ func outOfSyncSummary(r *Report) string {
 }
 
 func autoHeadline(a *AutoSyncInfo) string {
-	if len(a.Verified) == 0 {
-		return ""
+	for _, f := range a.Verified {
+		if f.Blocks {
+			return "Auto-sync: " + f.Text + "."
+		}
 	}
-	return "Auto-sync: " + a.Verified[0].Text + "."
+	return ""
 }
 
 func progressingSummary(r *Report) string {

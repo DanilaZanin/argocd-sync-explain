@@ -772,14 +772,21 @@ func analyzeWindows(s *model.Snapshot, r *Report) {
 		ruleText = "Argo CD 3.5 rules assumed (server version unknown)"
 		r.unknown("Argo CD version", "server version not available; sync windows evaluated with the latest supported rules")
 	}
+	// Who is asking: an operation in progress is judged as its initiator (controller/sync.go
+	// syncWindowPreventsSync); with no operation, the question is whether auto-sync may start one
+	// (appcontroller.go: CanSync(false, nil)).
 	manual := false
 	var opStart *time.Time
-	if st := s.App.Status.OperationState; st != nil && r.Operation.Kind != OpNone {
+	switch r.Operation.Kind {
+	case OpRunning, OpTerminating, OpBackoff:
+		st := s.App.Status.OperationState
 		manual = !st.Operation.InitiatedBy.Automated
 		if !st.StartedAt.IsZero() {
 			t := st.StartedAt
 			opStart = &t
 		}
+	case OpQueued:
+		manual = !s.App.Operation.InitiatedBy.Automated
 	}
 	ev := EvalWindows(s.Project, s.App, s.Now, manual, opStart, rules)
 	wi := &WindowInfo{Evaluated: true, CanSync: ev.CanSync, Reason: ev.Reason, Rules: ruleText, Manual: manual,

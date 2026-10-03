@@ -1,4 +1,4 @@
-package explain
+package explain_test
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/DanilaZanin/argocd-sync-explain/internal/explain"
 	"github.com/DanilaZanin/argocd-sync-explain/internal/model"
 	"github.com/DanilaZanin/argocd-sync-explain/internal/render"
 )
@@ -38,7 +39,7 @@ func TestGolden(t *testing.T) {
 			if err := json.Unmarshal(b, &s); err != nil {
 				t.Fatal(err)
 			}
-			rep := Explain(&s)
+			rep := explain.Explain(&s)
 
 			var text bytes.Buffer
 			render.Text(&text, rep)

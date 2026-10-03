@@ -232,58 +232,79 @@ func TestScenarios(t *testing.T) {
 		env.record(t, "prune-confirm", "app", o.Name)
 	})
 
-	scenario(t, "sync-window-deny-now", true, func(t *testing.T) {
-		env.apply(t, `apiVersion: argoproj.io/v1alpha1
+	// Sync windows. The controller does not start an auto-sync while a window denies it and writes
+	// nothing into the Application, so the explanation is the evaluated window. A manual operation
+	// is created and held, with a message in the operation state.
+	denyProject := func(t *testing.T, name, windows string) {
+		env.apply(t, fmt.Sprintf(`apiVersion: argoproj.io/v1alpha1
 kind: AppProject
-metadata: {name: ase-deny, namespace: argocd}
+metadata: {name: %s, namespace: argocd}
 spec:
   sourceRepos: ["*"]
   destinations: [{server: "*", namespace: "*"}]
   clusterResourceWhitelist: [{group: "*", kind: "*"}]
   syncWindows:
-    - {kind: deny, schedule: "* * * * *", duration: 1h, applications: ["*"]}
-`)
-		t.Cleanup(func() { _, _ = env.kubectl("", "-n", argoNS, "delete", "appproject", "ase-deny", "--ignore-not-found") })
+%s
+`, name, windows))
+		t.Cleanup(func() { _, _ = env.kubectl("", "-n", argoNS, "delete", "appproject", name, "--ignore-not-found") })
+	}
+	scenario(t, "sync-window-deny-now", true, func(t *testing.T) {
+		denyProject(t, "ase-deny", `    - {kind: deny, schedule: "* * * * *", duration: 1h, applications: ["*"]}`)
 		o := appOpts{Name: "ase-deny", Path: "deny", Namespace: "ase-deny", Project: "ase-deny"}
 		env.start(t, o, map[string]string{"cm.yaml": configMap("c", 0, "")}, true)
-		env.waitApp(t, o.Name, "operation blocked by the sync window", waitLong, func(a *model.Application) bool {
-			return strings.Contains(opMsg(a), "blocked by sync window")
-		})
+		env.waitApp(t, o.Name, "OutOfSync", waitLong, func(a *model.Application) bool { return a.Status.Sync.Status == "OutOfSync" })
+		time.Sleep(10 * time.Second) // the controller had its chance to auto-sync
+		a, _ := env.app(o.Name)
+		if a.Status.OperationState != nil {
+			t.Fatalf("a deny window must keep auto-sync from starting an operation: %+v", a.Status.OperationState)
+		}
 		rep, code, _ := env.explain(t, "app", o.Name)
-		expectVerdict(t, rep, code, explain.VerdictWaiting, 2)
-		mustBlocker(t, rep, explain.RoleWaitingOn, "sync-window", "SyncWindow", "")
+		expectVerdict(t, rep, code, explain.VerdictOutOfSync, 2)
 		if rep.SyncWindows == nil || rep.SyncWindows.CanSync || !strings.Contains(rep.SyncWindows.Reason, "deny window is active") {
 			t.Fatalf("sync window evaluation: %+v", rep.SyncWindows)
+		}
+		if !hasBlockingFinding(rep, "sync window blocks automated syncs") {
+			t.Fatalf("auto-sync findings: %+v", rep.AutoSync)
 		}
 		env.record(t, "sync-window-deny", "app", o.Name)
 	})
 
 	scenario(t, "no-allow-window", false, func(t *testing.T) {
 		hour := (time.Now().UTC().Hour() + 12) % 24
-		env.apply(t, fmt.Sprintf(`apiVersion: argoproj.io/v1alpha1
-kind: AppProject
-metadata: {name: ase-noallow, namespace: argocd}
-spec:
-  sourceRepos: ["*"]
-  destinations: [{server: "*", namespace: "*"}]
-  clusterResourceWhitelist: [{group: "*", kind: "*"}]
-  syncWindows:
-    - {kind: allow, schedule: "0 %d * * *", duration: 1h, applications: ["*"]}
-`, hour))
-		t.Cleanup(func() {
-			_, _ = env.kubectl("", "-n", argoNS, "delete", "appproject", "ase-noallow", "--ignore-not-found")
-		})
+		denyProject(t, "ase-noallow", fmt.Sprintf(`    - {kind: allow, schedule: "0 %d * * *", duration: 1h, applications: ["*"]}`, hour))
 		o := appOpts{Name: "ase-noallow", Path: "noallow", Namespace: "ase-noallow", Project: "ase-noallow"}
 		env.start(t, o, map[string]string{"cm.yaml": configMap("c", 0, "")}, true)
-		env.waitApp(t, o.Name, "operation blocked by the sync window", waitLong, func(a *model.Application) bool {
+		env.waitApp(t, o.Name, "OutOfSync", waitLong, func(a *model.Application) bool { return a.Status.Sync.Status == "OutOfSync" })
+		time.Sleep(10 * time.Second)
+		rep, code, _ := env.explain(t, "app", o.Name)
+		expectVerdict(t, rep, code, explain.VerdictOutOfSync, 2)
+		if rep.SyncWindows == nil || rep.SyncWindows.CanSync || !strings.Contains(rep.SyncWindows.Reason, "none is active") {
+			t.Fatalf("sync window evaluation: %+v", rep.SyncWindows)
+		}
+		if !hasBlockingFinding(rep, "sync window blocks automated syncs") {
+			t.Fatalf("auto-sync findings: %+v", rep.AutoSync)
+		}
+	})
+
+	scenario(t, "sync-window-holds-manual-operation", false, func(t *testing.T) {
+		denyProject(t, "ase-denym", `    - {kind: deny, schedule: "* * * * *", duration: 1h, applications: ["*"]}`)
+		o := appOpts{Name: "ase-denym", Path: "denym", Namespace: "ase-denym", Project: "ase-denym", SyncPolicy: "  syncPolicy:\n    syncOptions: []\n"}
+		env.start(t, o, map[string]string{"cm.yaml": configMap("c", 0, "")}, true)
+		env.waitApp(t, o.Name, "OutOfSync", waitLong, func(a *model.Application) bool { return a.Status.Sync.Status == "OutOfSync" })
+		if out, err := env.kubectl("", "-n", argoNS, "patch", "application", o.Name, "--type=merge", "-p",
+			`{"operation":{"initiatedBy":{"username":"e2e"},"sync":{"revision":"main"}}}`); err != nil {
+			t.Fatalf("request sync: %v %s", err, out)
+		}
+		env.waitApp(t, o.Name, "operation held by the sync window", waitLong, func(a *model.Application) bool {
 			return strings.Contains(opMsg(a), "blocked by sync window")
 		})
 		rep, code, _ := env.explain(t, "app", o.Name)
 		expectVerdict(t, rep, code, explain.VerdictWaiting, 2)
 		mustBlocker(t, rep, explain.RoleWaitingOn, "sync-window", "SyncWindow", "")
-		if rep.SyncWindows == nil || rep.SyncWindows.CanSync || !strings.Contains(rep.SyncWindows.Reason, "none is active") {
+		if rep.SyncWindows == nil || rep.SyncWindows.CanSync || !rep.SyncWindows.Manual {
 			t.Fatalf("sync window evaluation: %+v", rep.SyncWindows)
 		}
+		env.record(t, "sync-window-holds-operation", "app", o.Name)
 	})
 
 	scenario(t, "automated-disabled", true, func(t *testing.T) {
@@ -316,7 +337,7 @@ spec:
 	scenario(t, "retry-backoff", false, func(t *testing.T) {
 		o := appOpts{Name: "ase-backoff", Path: "backoff", Namespace: "ase-backoff",
 			SyncPolicy: "  syncPolicy:\n    automated: {}\n    retry: {limit: 5, backoff: {duration: 1h, factor: 2, maxDuration: 2h}}\n"}
-		env.start(t, o, map[string]string{"hook.yaml": job("bad", "PreSync", "exit 1", 0, "")}, true)
+		env.start(t, o, map[string]string{"hook.yaml": job("bad", "PreSync", "exit 1", 0, ""), "cm.yaml": configMap("c", 0, "")}, true)
 		a := env.waitApp(t, o.Name, "retry backoff (Running with finishedAt)", waitLong, func(a *model.Application) bool {
 			return a.Status.OperationState != nil && a.Status.OperationState.Phase == "Running" && a.Status.OperationState.FinishedAt != nil
 		})
@@ -379,8 +400,8 @@ spec:
 		parent, child := "ase-nolua-parent", "ase-nolua-child"
 		env.namespace(t, "ase-nolua-child")
 		env.put(t, "nolua-child/web.yaml", deployment("web", 0, false, 0))
-		env.put(t, "nolua-parent/child.yaml", childApp(child, "nolua-child", ""))
-		env.put(t, "nolua-parent/after.yaml", configMap("after", 1, ""))
+		env.put(t, "nolua-parent/child.yaml", childApp(child, "nolua-child"))
+		env.put(t, "nolua-parent/after.yaml", configMap("after-nolua", 1, ""))
 		o := appOpts{Name: parent, Path: "nolua-parent", Namespace: "argocd"}
 		env.start(t, o, nil, false)
 		t.Cleanup(func() { env.deleteApp(child) })
@@ -414,8 +435,8 @@ spec:
 			parent, child := "ase-lua-parent", "ase-lua-child"
 			env.namespace(t, "ase-lua-child")
 			env.put(t, "lua-child/web.yaml", deployment("web", 0, false, 0))
-			env.put(t, "lua-parent/child.yaml", childApp(child, "lua-child", ""))
-			env.put(t, "lua-parent/after.yaml", configMap("after", 1, ""))
+			env.put(t, "lua-parent/child.yaml", childApp(child, "lua-child"))
+			env.put(t, "lua-parent/after.yaml", configMap("after-lua", 1, ""))
 			o := appOpts{Name: parent, Path: "lua-parent", Namespace: "argocd"}
 			env.start(t, o, nil, false)
 			t.Cleanup(func() { env.deleteApp(child) })
@@ -431,7 +452,7 @@ spec:
 			if len(rep.Children) != 1 || rep.Children[0].Relation != explain.RelWaits || rep.Children[0].Report == nil {
 				t.Fatalf("children: %+v", rep.Children)
 			}
-			if findBlocker(rep, "", "", "ConfigMap", "after") != nil {
+			if findBlocker(rep, "", "", "ConfigMap", "after-lua") != nil {
 				t.Fatal("the parent's next-wave ConfigMap is not a blocker")
 			}
 			env.record(t, "app-of-apps-with-lua", "app", parent)
@@ -440,8 +461,8 @@ spec:
 			parent, child := "ase-luad-parent", "ase-luad-child"
 			env.namespace(t, "ase-luad-child")
 			env.put(t, "luad-child/web.yaml", deployment("web", 0, false, 10))
-			env.put(t, "luad-parent/child.yaml", childApp(child, "luad-child", ""))
-			env.put(t, "luad-parent/after.yaml", configMap("after", 1, ""))
+			env.put(t, "luad-parent/child.yaml", childApp(child, "luad-child"))
+			env.put(t, "luad-parent/after.yaml", configMap("after-luad", 1, ""))
 			o := appOpts{Name: parent, Path: "luad-parent", Namespace: "argocd"}
 			env.start(t, o, nil, false)
 			t.Cleanup(func() { env.deleteApp(child) })
@@ -457,7 +478,7 @@ spec:
 		parent, child := "ase-rbac-parent", "ase-rbac-child"
 		env.namespace(t, "ase-rbac-child")
 		env.put(t, "rbac-child/cm.yaml", configMap("c", 0, ""))
-		env.put(t, "rbac-parent/child.yaml", childApp(child, "rbac-child", ""))
+		env.put(t, "rbac-parent/child.yaml", childApp(child, "rbac-child"))
 		o := appOpts{Name: parent, Path: "rbac-parent", Namespace: "argocd"}
 		env.start(t, o, nil, false)
 		t.Cleanup(func() { env.deleteApp(child) })
@@ -521,6 +542,18 @@ func hasCond(a *model.Application, typ string) bool {
 func hasReportCond(r *explain.Report, typ string) bool {
 	for _, c := range r.Conditions {
 		if c.Type == typ {
+			return true
+		}
+	}
+	return false
+}
+
+func hasBlockingFinding(r *explain.Report, sub string) bool {
+	if r.AutoSync == nil {
+		return false
+	}
+	for _, f := range r.AutoSync.Verified {
+		if f.Blocks && strings.Contains(f.Text, sub) {
 			return true
 		}
 	}
