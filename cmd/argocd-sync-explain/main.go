@@ -158,7 +158,7 @@ func run(args []string, stdout, stderr *os.File, env func(string) string) int {
 		}
 		src = collect.NewKubeSource(dyn, *argoNS)
 		if *mode == "auto" {
-			fmt.Fprintln(stderr, "note: no Argo CD API configured; using kubeconfig-only mode (resource health, the resource tree and events are shown as unknown)")
+			fmt.Fprintln(stderr, "note: no Argo CD API configured; using kubeconfig-only mode (resource health and the resource tree are shown as unknown)")
 		}
 	}
 

@@ -1,0 +1,77 @@
+{
+  "application": {
+    "name": "ase-deleting",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "Synced",
+    "healthStatus": "Healthy",
+    "comparedRevisions": [
+      "d1e6a817bcf4a210a9f38e45b207fd7a7a061f7d"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git deleting @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "deleting",
+  "exitCode": 2,
+  "summary": "The Application is being deleted (deletionTimestamp 2026-10-03T07:59:06Z) but still exists. Held by: ConfigMap/held.",
+  "operation": {
+    "kind": "finished",
+    "phase": "Succeeded",
+    "message": "successfully synced (all tasks run)",
+    "startedAt": "2026-10-03T07:59:05Z",
+    "finishedAt": "2026-10-03T07:59:05Z",
+    "initiator": "automated sync",
+    "revisions": [
+      "d1e6a817bcf4a210a9f38e45b207fd7a7a061f7d"
+    ],
+    "retryCount": 0,
+    "retry": {
+      "limit": 0,
+      "unlimited": false,
+      "backoff": "duration=5s factor=2 maxDuration=3m0s",
+      "source": ".status.operationState.operation.retry"
+    },
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.message"
+    ]
+  },
+  "blockers": [
+    {
+      "role": "waiting-on",
+      "type": "resource",
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-deleting",
+        "name": "held"
+      },
+      "id": "/ConfigMap/ase-deleting/held",
+      "wave": "-",
+      "why": "deletion of the Application waits for this resource, which has a deletionTimestamp and is held by finalizers: ase/hold",
+      "source": "live object .metadata.finalizers"
+    }
+  ],
+  "deleting": {
+    "since": "2026-10-03T07:59:06Z",
+    "finalizers": [
+      "resources-finalizer.argocd.argoproj.io"
+    ],
+    "cascade": "cascade (default propagation): Argo CD deletes the managed resources and removes the finalizer only when none remain",
+    "remaining": [
+      {
+        "ref": {
+          "kind": "ConfigMap",
+          "namespace": "ase-deleting",
+          "name": "held"
+        },
+        "state": "being deleted since 2026-10-03T07:59:06Z, held by finalizers ase/hold",
+        "finalizers": [
+          "ase/hold"
+        ],
+        "source": "live object"
+      }
+    ],
+    "basis": ".metadata.deletionTimestamp, .metadata.finalizers, live objects of managed resources"
+  }
+}

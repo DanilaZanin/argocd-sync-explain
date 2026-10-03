@@ -1,0 +1,137 @@
+{
+  "application": {
+    "name": "ase-nshook",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "OutOfSync",
+    "healthStatus": "Missing",
+    "comparedRevisions": [
+      "5e66123e0e8256cd754a125f7e8f2aacd0a15eb0"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git nshook @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "waiting",
+  "exitCode": 2,
+  "summary": "The sync operation is running and waits on: PreSync hook Job/slow.",
+  "operation": {
+    "kind": "running",
+    "phase": "Running",
+    "message": "waiting for completion of hook batch/Job/slow",
+    "startedAt": "2026-10-03T07:58:49Z",
+    "initiator": "automated sync",
+    "revisions": [
+      "5e66123e0e8256cd754a125f7e8f2aacd0a15eb0"
+    ],
+    "retryCount": 0,
+    "retry": {
+      "limit": 0,
+      "unlimited": false,
+      "backoff": "duration=5s factor=2 maxDuration=3m0s",
+      "source": ".status.operationState.operation.retry"
+    },
+    "waitReason": "hook-completion",
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.message",
+      ".status.operationState.syncResult.resources"
+    ]
+  },
+  "position": {
+    "phase": "PreSync",
+    "wave": "unknown",
+    "basis": "reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor"
+  },
+  "blockers": [
+    {
+      "role": "waiting-on",
+      "type": "hook",
+      "ref": {
+        "group": "batch",
+        "kind": "Job",
+        "namespace": "ase-nshook",
+        "name": "slow"
+      },
+      "id": "batch/Job/ase-nshook/slow",
+      "syncPhase": "PreSync",
+      "hookType": "PreSync",
+      "hookPhase": "Running",
+      "applyResult": "Synced",
+      "wave": "unknown (hook waves are annotations on the manifest, not recorded in the Application)",
+      "message": "job.batch/slow created",
+      "health": {
+        "status": "Progressing",
+        "source": "resource tree node health"
+      },
+      "why": "PreSync hook has not finished; the operation does not start later tasks until it completes",
+      "source": ".status.operationState.syncResult.resources"
+    }
+  ],
+  "pending": {
+    "count": 1,
+    "waves": [
+      0
+    ],
+    "resources": [
+      "ConfigMap/c"
+    ],
+    "basis": ".status.resources minus .status.operationState.syncResult.resources",
+    "caveat": "resources without a result yet; prune tasks run in reverse wave order, PruneLast adds a final wave, and hooks are not listed with waves, so this is a reconstruction, not the controller's task list"
+  },
+  "observations": [
+    {
+      "under": "Job/slow",
+      "ref": {
+        "kind": "Pod",
+        "namespace": "ase-nshook",
+        "name": "slow-298dl"
+      },
+      "health": {
+        "status": "Progressing",
+        "source": "resource tree node health"
+      },
+      "info": "Status Reason=Running Containers=1/1",
+      "source": "resource tree node"
+    }
+  ],
+  "outOfSync": [
+    {
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-nshook",
+        "name": "c"
+      },
+      "status": "OutOfSync",
+      "missing": "yes (resource health is Missing)",
+      "source": ".status.resources[]"
+    }
+  ],
+  "autoSync": {
+    "enabled": true,
+    "verified": [
+      {
+        "text": "automated sync is enabled (an `automated` block without `enabled` means enabled)",
+        "source": ".spec.syncPolicy.automated"
+      },
+      {
+        "text": "an operation is already in progress; auto-sync does not start another",
+        "blocks": true,
+        "source": ".operation / .status.operationState.phase"
+      }
+    ],
+    "possible": []
+  },
+  "notes": [
+    {
+      "code": "stale-running-result",
+      "text": "results still marked Running that the controller message does not account for, not treated as blockers: Namespace/ase-nshook (syncPhase PreSync)",
+      "source": ".status.operationState.syncResult.resources vs .status.operationState.message"
+    },
+    {
+      "code": "no-field-diff",
+      "text": "field-level differences are not shown; run `argocd app diff ase-nshook`",
+      "source": "-"
+    }
+  ]
+}

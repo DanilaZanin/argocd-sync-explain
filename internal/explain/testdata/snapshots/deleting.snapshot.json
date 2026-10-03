@@ -1,0 +1,163 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T10:59:07.101769+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-deleting",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"finalizers\":[\"resources-finalizer.argocd.argoproj.io\"],\"name\":\"ase-deleting\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-deleting\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"deleting\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"limit\":0}}}}\n"
+   },
+   "deletionTimestamp": "2026-10-03T07:59:06Z",
+   "finalizers": [
+    "resources-finalizer.argocd.argoproj.io"
+   ]
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "deleting",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-deleting"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "retry": {}
+   }
+  },
+  "status": {
+   "resources": [
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "ase-deleting",
+     "name": "held",
+     "status": "Synced"
+    }
+   ],
+   "sync": {
+    "status": "Synced",
+    "revision": "d1e6a817bcf4a210a9f38e45b207fd7a7a061f7d"
+   },
+   "health": {
+    "status": "Healthy"
+   },
+   "reconciledAt": "2026-10-03T07:59:05Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "d1e6a817bcf4a210a9f38e45b207fd7a7a061f7d"
+     },
+     "initiatedBy": {
+      "automated": true
+     },
+     "retry": {}
+    },
+    "phase": "Succeeded",
+    "message": "successfully synced (all tasks run)",
+    "syncResult": {
+     "resources": [
+      {
+       "group": "",
+       "version": "v1",
+       "kind": "ConfigMap",
+       "namespace": "ase-deleting",
+       "name": "held",
+       "status": "Synced",
+       "message": "configmap/held created",
+       "hookPhase": "Running",
+       "syncPhase": "Sync"
+      }
+     ],
+     "revision": "d1e6a817bcf4a210a9f38e45b207fd7a7a061f7d",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "deleting",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T07:59:05Z",
+    "finishedAt": "2026-10-03T07:59:05Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "ase-deleting",
+    "name": "held",
+    "uid": "91a8b8f8-f668-4cba-96f6-38f829ca9613"
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to 'd1e6a817bcf4a210a9f38e45b207fd7a7a061f7d'",
+   "lastTimestamp": "2026-10-03T07:59:05Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T07:59:05Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T07:59:05Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "OperationCompleted",
+   "message": "Sync operation to d1e6a817bcf4a210a9f38e45b207fd7a7a061f7d succeeded",
+   "lastTimestamp": "2026-10-03T07:59:05Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status: OutOfSync -\u003e Synced",
+   "lastTimestamp": "2026-10-03T07:59:05Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status: Missing -\u003e Healthy",
+   "lastTimestamp": "2026-10-03T07:59:05Z",
+   "count": 1
+  }
+ ],
+ "Live": {
+  "/ConfigMap/ase-deleting/held": {
+   "exists": true,
+   "deletionTimestamp": "2026-10-03T07:59:06Z",
+   "finalizers": [
+    "ase/hold"
+   ]
+  }
+ },
+ "Children": {},
+ "Unavailable": {}
+}

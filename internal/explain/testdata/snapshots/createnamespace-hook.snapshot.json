@@ -1,0 +1,229 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T10:58:52.706913+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-nshook",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-nshook\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-nshook\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"nshook\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"limit\":0},\"syncOptions\":[\"CreateNamespace=true\"]}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "nshook",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-nshook"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "syncOptions": [
+     "CreateNamespace=true"
+    ],
+    "retry": {}
+   }
+  },
+  "operation": {
+   "sync": {
+    "revision": "5e66123e0e8256cd754a125f7e8f2aacd0a15eb0",
+    "syncOptions": [
+     "CreateNamespace=true"
+    ]
+   },
+   "initiatedBy": {
+    "automated": true
+   },
+   "retry": {}
+  },
+  "status": {
+   "resources": [
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "ase-nshook",
+     "name": "c",
+     "status": "OutOfSync",
+     "health": {
+      "status": "Missing"
+     }
+    },
+    {
+     "group": "batch",
+     "version": "v1",
+     "kind": "Job",
+     "namespace": "ase-nshook",
+     "name": "slow",
+     "health": {
+      "status": "Progressing"
+     },
+     "hook": true,
+     "requiresPruning": true
+    }
+   ],
+   "sync": {
+    "status": "OutOfSync",
+    "revision": "5e66123e0e8256cd754a125f7e8f2aacd0a15eb0"
+   },
+   "health": {
+    "status": "Missing"
+   },
+   "reconciledAt": "2026-10-03T07:58:48Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "5e66123e0e8256cd754a125f7e8f2aacd0a15eb0",
+      "syncOptions": [
+       "CreateNamespace=true"
+      ]
+     },
+     "initiatedBy": {
+      "automated": true
+     },
+     "retry": {}
+    },
+    "phase": "Running",
+    "message": "waiting for completion of hook batch/Job/slow",
+    "syncResult": {
+     "resources": [
+      {
+       "group": "",
+       "version": "v1",
+       "kind": "Namespace",
+       "namespace": "",
+       "name": "ase-nshook",
+       "status": "Synced",
+       "message": "namespace/ase-nshook created",
+       "hookPhase": "Running",
+       "syncPhase": "PreSync"
+      },
+      {
+       "group": "batch",
+       "version": "v1",
+       "kind": "Job",
+       "namespace": "ase-nshook",
+       "name": "slow",
+       "status": "Synced",
+       "message": "job.batch/slow created",
+       "hookType": "PreSync",
+       "hookPhase": "Running",
+       "syncPhase": "PreSync"
+      }
+     ],
+     "revision": "5e66123e0e8256cd754a125f7e8f2aacd0a15eb0",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "nshook",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T07:58:49Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "ase-nshook",
+    "name": "c",
+    "health": {
+     "status": "Missing"
+    }
+   },
+   {
+    "version": "v1",
+    "kind": "Pod",
+    "namespace": "ase-nshook",
+    "name": "slow-298dl",
+    "uid": "98a52024-74fe-4008-b626-cc67734d277b",
+    "parentRefs": [
+     {
+      "group": "batch",
+      "version": "v1",
+      "kind": "Job",
+      "namespace": "ase-nshook",
+      "name": "slow",
+      "uid": "45da88a9-331e-4b3f-8f1b-0c40c5578a44"
+     }
+    ],
+    "health": {
+     "status": "Progressing"
+    },
+    "info": [
+     {
+      "name": "Status Reason",
+      "value": "Running"
+     },
+     {
+      "name": "Node",
+      "value": "ase-v3-5-3-control-plane"
+     },
+     {
+      "name": "Containers",
+      "value": "1/1"
+     },
+     {
+      "name": "cpu",
+      "value": "0"
+     },
+     {
+      "name": "memory",
+      "value": "0"
+     }
+    ]
+   },
+   {
+    "group": "batch",
+    "version": "v1",
+    "kind": "Job",
+    "namespace": "ase-nshook",
+    "name": "slow",
+    "uid": "45da88a9-331e-4b3f-8f1b-0c40c5578a44",
+    "health": {
+     "status": "Progressing"
+    }
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to '5e66123e0e8256cd754a125f7e8f2aacd0a15eb0'",
+   "lastTimestamp": "2026-10-03T07:58:49Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T07:58:49Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T07:58:49Z",
+   "count": 1
+  }
+ ],
+ "Live": null,
+ "Children": {},
+ "Unavailable": {}
+}

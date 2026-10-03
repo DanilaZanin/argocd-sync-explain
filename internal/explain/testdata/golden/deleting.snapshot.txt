@@ -1,0 +1,18 @@
+argocd/ase-deleting  sync=Synced health=Healthy  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: DELETING
+  The Application is being deleted (deletionTimestamp 2026-10-03T07:59:06Z) but still exists. Held by: ConfigMap/held.
+
+Operation: finished (phase=Succeeded, automated sync, started 2026-10-03T07:59:05Z, finished 2026-10-03T07:59:05Z)
+  message: successfully synced (all tasks run)
+  retry: limit=0, duration=5s factor=2 maxDuration=3m0s (.status.operationState.operation.retry)
+
+Blockers:
+  [waiting-on] resource ConfigMap/held (ns ase-deleting)
+      deletion of the Application waits for this resource, which has a deletionTimestamp and is held by finalizers: ase/hold
+      source: live object .metadata.finalizers
+
+Deletion (since 2026-10-03T07:59:06Z): cascade (default propagation): Argo CD deletes the managed resources and removes the finalizer only when none remain
+  finalizers on the Application: resources-finalizer.argocd.argoproj.io
+  remaining: ConfigMap/held (ns ase-deleting) being deleted since 2026-10-03T07:59:06Z, held by finalizers ase/hold  [live object]
