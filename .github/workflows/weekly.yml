@@ -1,0 +1,14 @@
+name: weekly
+
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  full:
+    uses: ./.github/workflows/ci.yml
+    with:
+      full_e2e: true

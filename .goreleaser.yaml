@@ -1,0 +1,35 @@
+version: 2
+project_name: argocd-sync-explain
+
+builds:
+  - id: cli
+    main: ./cmd/argocd-sync-explain
+    binary: argocd-sync-explain
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags: ["-s -w -X main.version={{.Version}}"]
+  # The same program under the name kubectl discovers as a plugin: `kubectl argocd-sync-explain`.
+  - id: kubectl-plugin
+    main: ./cmd/argocd-sync-explain
+    binary: kubectl-argocd_sync_explain
+    env: [CGO_ENABLED=0]
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    flags: [-trimpath]
+    ldflags: ["-s -w -X main.version={{.Version}}"]
+
+archives:
+  - id: default
+    formats: [tar.gz]
+    ids: [cli, kubectl-plugin]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files: [LICENSE, README.md]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  sort: asc

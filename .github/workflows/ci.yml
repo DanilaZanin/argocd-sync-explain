@@ -1,0 +1,92 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      full_e2e:
+        description: "Run the full e2e matrix (both Argo CD versions, all scenarios)"
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      full_e2e:
+        description: "Run the full e2e matrix (both Argo CD versions, all scenarios)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: vet
+        run: make vet
+      - name: lint
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.14.0
+      - name: unit tests (race)
+        run: make test GOTESTFLAGS="-race -count=1"
+      - name: build
+        run: make build
+
+  # The full matrix runs when the caller sets the input full_e2e (release.yml, weekly.yml,
+  # workflow_dispatch). Never branch on github.event_name for this: in a called workflow it is
+  # the caller's event.
+  e2e-small:
+    needs: verify
+    if: ${{ inputs.full_e2e != true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: install kind
+        run: go install sigs.k8s.io/kind@v0.33.0
+      - name: e2e (current Argo CD, small set)
+        run: make e2e
+
+  e2e-full:
+    needs: verify
+    if: ${{ inputs.full_e2e == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        which: [previous, current]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: install kind
+        run: go install sigs.k8s.io/kind@v0.33.0
+      - name: build
+        run: make build
+      - name: e2e (${{ matrix.which }} Argo CD, all scenarios)
+        run: test/e2e/run.sh ${{ matrix.which }} full
+
+  snapshot:
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
+        with:
+          version: "~> v2"
+          args: release --snapshot --clean

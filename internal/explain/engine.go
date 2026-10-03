@@ -512,13 +512,19 @@ func buildPending(s *model.Snapshot, r *Report, results []model.ResourceResult) 
 	for _, x := range results {
 		seen[refOfResult(x).ID()] = true
 	}
+	outOfSyncOnly := false
+	if op != nil {
+		for _, o := range op.SyncOptions {
+			outOfSyncOnly = outOfSyncOnly || o == "ApplyOutOfSyncOnly=true"
+		}
+	}
 	pi := &PendingInfo{Basis: ".status.resources minus .status.operationState.syncResult.resources",
 		Caveat: "resources without a result yet; prune tasks run in reverse wave order, PruneLast adds a final wave, and hooks are not listed with waves, so this is a reconstruction, not the controller's task list",
 		Waves:  []int64{}, Resources: []string{}}
 	waveSet := map[int64]bool{}
 	for _, rs := range s.App.Status.Resources {
 		ref := refOfStatus(rs)
-		if rs.Hook || rs.RequiresPruning || seen[ref.ID()] {
+		if rs.Hook || rs.RequiresPruning || seen[ref.ID()] || (outOfSyncOnly && rs.Status == "Synced") {
 			continue
 		}
 		pi.Resources = append(pi.Resources, ref.Kind+"/"+ref.Name)
