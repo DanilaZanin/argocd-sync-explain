@@ -109,6 +109,8 @@ type appOpts struct {
 	// SyncPolicy is the YAML under spec (default: automated, no retry).
 	SyncPolicy string
 	RepoURL    string
+	// Finalizers adds the resources finalizer (cascade deletion).
+	Finalizers bool
 }
 
 const autoNoRetry = `  syncPolicy:
@@ -126,16 +128,20 @@ func appYAML(o appOpts) string {
 	if o.SyncPolicy == "" {
 		o.SyncPolicy = autoNoRetry
 	}
+	fin := ""
+	if o.Finalizers {
+		fin = "\n  finalizers: [resources-finalizer.argocd.argoproj.io]"
+	}
 	return fmt.Sprintf(`apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: %s
-  namespace: argocd
+  namespace: argocd%s
 spec:
   project: %s
   source: {repoURL: %q, targetRevision: main, path: %s}
   destination: {server: "https://kubernetes.default.svc", namespace: %s}
-%s`, o.Name, o.Project, o.RepoURL, o.Path, o.Namespace, o.SyncPolicy)
+%s`, o.Name, fin, o.Project, o.RepoURL, o.Path, o.Namespace, o.SyncPolicy)
 }
 
 // start writes the files, creates the namespace and the Application, and removes the

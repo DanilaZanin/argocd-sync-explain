@@ -77,7 +77,7 @@ func analyzeDeleting(s *model.Snapshot, r *Report) {
 				d.Remaining = append(d.Remaining, rr)
 				continue
 			}
-			if n := findNode(s.Tree, ref); n != nil && !(n.Health != nil && n.Health.Status == "Missing") {
+			if n := findNode(s.Tree, ref); n != nil && (n.Health == nil || n.Health.Status != "Missing") {
 				d.Remaining = append(d.Remaining, RemainingRes{Ref: ref, State: "exists (live details not read)", Source: "resource tree node"})
 			} else if s.Tree == nil || liveWhy {
 				d.Remaining = append(d.Remaining, RemainingRes{Ref: ref, State: Unknown + " (needs the Argo CD API)", Source: "-"})

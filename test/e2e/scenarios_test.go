@@ -4,6 +4,8 @@ package e2e
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"strings"
 	"testing"
 	"time"
@@ -86,6 +88,9 @@ func TestScenarios(t *testing.T) {
 			if rep.Mode != "kubeconfig" || !hasUnknown(rep, "tree") {
 				t.Fatalf("tree must be an explicit unknown: %+v", rep.Unknowns)
 			}
+			if hasUnknown(rep, "events") || hasUnknown(rep, "version") || rep.ArgoVersion == "" {
+				t.Fatalf("events and the server version are readable through the kubeconfig: %+v %q", rep.Unknowns, rep.ArgoVersion)
+			}
 			if len(rep.Observation) != 0 {
 				t.Fatalf("no observations without the tree: %+v", rep.Observation)
 			}
@@ -94,11 +99,14 @@ func TestScenarios(t *testing.T) {
 
 		if env.Full {
 			t.Run("revision-mismatch", func(t *testing.T) {
-				env.put(t, o.Path+"/later.yaml", configMap("later", 1, "    new: change"))
+				// The waiting Deployment moves from wave 0 to wave 5 in a newer commit. The running
+				// operation still uses the old revision, so the current comparison must not be read as its position.
+				env.put(t, o.Path+"/web.yaml", deployment("web", 5, false, 0))
 				env.refresh(o.Name)
 				env.waitApp(t, o.Name, "comparison against a newer revision", 90*time.Second, func(a *model.Application) bool {
 					return a.Status.OperationState != nil && a.Status.OperationState.SyncResult != nil &&
-						a.Status.Sync.Revision != "" && a.Status.Sync.Revision != a.Status.OperationState.SyncResult.Revision
+						a.Status.Sync.Revision != "" && a.Status.Sync.Revision != a.Status.OperationState.SyncResult.Revision &&
+						a.Status.Resources != nil && waveOf(a, "web") == 5
 				})
 				rep, _, _ := env.explain(t, "app", o.Name)
 				found := false
@@ -109,6 +117,13 @@ func TestScenarios(t *testing.T) {
 				}
 				if !found || rep.Verdict != explain.VerdictWaiting {
 					t.Fatalf("revision mismatch note missing or verdict changed: %+v %s", rep.Notes, rep.Verdict)
+				}
+				b := mustBlocker(t, rep, explain.RoleWaitingOn, "resource", "Deployment", "web")
+				if !strings.HasPrefix(b.Wave, explain.Unknown) || rep.Position == nil || rep.Position.Wave != explain.Unknown {
+					t.Fatalf("the wave must be unknown, not 5: blocker=%q position=%+v", b.Wave, rep.Position)
+				}
+				if rep.Pending != nil || !hasUnknown(rep, "pending tasks") {
+					t.Fatalf("pending must be unknown: %+v %+v", rep.Pending, rep.Unknowns)
 				}
 			})
 		}
@@ -198,13 +213,41 @@ func TestScenarios(t *testing.T) {
 		env.waitApp(t, o.Name, "Synced and Healthy", waitLong, func(a *model.Application) bool {
 			return a.Status.Sync.Status == "Synced" && a.Status.Health.Status == "Healthy" && opPhase(a) == "Succeeded"
 		})
-		if out, _ := env.kubectl("", "-n", o.Namespace, "get", "job", "once", "--ignore-not-found", "-o", "name"); strings.TrimSpace(out) != "" {
-			t.Logf("hook Job still exists (deletion lags the operation): %s", out)
+		// The hook must really be gone (confirmed NotFound), and the operation must still remember it as Succeeded.
+		if err := retry(60*time.Second, func() error {
+			out, err := env.kubectl("", "-n", o.Namespace, "get", "job", "once", "--ignore-not-found", "-o", "name")
+			if err != nil {
+				return err
+			}
+			if strings.TrimSpace(out) != "" {
+				return fmt.Errorf("hook Job still exists: %s", out)
+			}
+			return nil
+		}); err != nil {
+			t.Fatal(err)
+		}
+		a, _ := env.app(o.Name)
+		remembered := false
+		for _, x := range a.Status.OperationState.SyncResult.Resources {
+			if x.Kind == "Job" && x.Name == "once" && x.HookType == "PreSync" && x.HookPhase == "Succeeded" {
+				remembered = true
+			}
+		}
+		if !remembered {
+			t.Fatalf("the Succeeded hook result is expected in the operation history: %+v", a.Status.OperationState.SyncResult.Resources)
 		}
 		rep, code, _ := env.explain(t, "app", o.Name)
 		expectVerdict(t, rep, code, explain.VerdictHealthy, 0)
 		if len(rep.Blockers) != 0 {
 			t.Fatalf("a hook that finished and was deleted is history, not a blocker: %+v", rep.Blockers)
+		}
+		if out, _ := env.kubectl("", "-n", o.Namespace, "get", "job", "once", "--ignore-not-found", "-o", "name"); strings.TrimSpace(out) != "" {
+			t.Fatalf("the hook must be NotFound: %s", out)
+		}
+		for _, o := range rep.Observation {
+			if o.Ref.Name == "once" {
+				t.Fatalf("a deleted hook must not appear in the tree observations: %+v", o)
+			}
 		}
 	})
 
@@ -371,13 +414,134 @@ spec:
 		if rep.Operation.Kind != explain.OpBackoff || rep.Operation.NextRetryNotBefore != want {
 			t.Fatalf("kind=%s next=%s want %s", rep.Operation.Kind, rep.Operation.NextRetryNotBefore, want)
 		}
-		env.waitApp(t, o.Name, "second attempt to start", 3*time.Minute, func(a *model.Application) bool {
-			st := a.Status.OperationState
-			return st != nil && (st.FinishedAt == nil || st.RetryCount > 1 || !st.FinishedAt.UTC().Equal(finished))
-		})
-		if elapsed := time.Since(finished); elapsed < 39*time.Second {
-			t.Fatalf("the controller retried %s after the failure, before the computed 40s (20s * 2^1)", elapsed)
+		// The new attempt is identified by the creationTimestamp of the recreated hook Job, which is the moment
+		// the retry really started, not the moment this test noticed it.
+		first := env.jobCreated(t, o.Namespace, "bad")
+		var second time.Time
+		if err := retry(3*time.Minute, func() error {
+			ts := env.jobCreated(t, o.Namespace, "bad")
+			if ts.IsZero() || ts.Equal(first) {
+				return fmt.Errorf("no new attempt yet")
+			}
+			second = ts
+			return nil
+		}); err != nil {
+			t.Fatal(err)
 		}
+		notBefore, err := time.Parse(time.RFC3339, rep.Operation.NextRetryNotBefore)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if second.Before(notBefore) {
+			t.Fatalf("the new attempt started at %s, before the reported not-before %s", second.Format(time.RFC3339), notBefore.Format(time.RFC3339))
+		}
+	})
+
+	// Opus B1: CreateNamespace=true leaves a Running result for the synthetic Namespace next to the real PreSync hook.
+	scenario(t, "createnamespace-with-presync-hook", false, func(t *testing.T) {
+		o := appOpts{Name: "ase-nshook", Path: "nshook", Namespace: "ase-nshook",
+			SyncPolicy: "  syncPolicy:\n    automated: {}\n    retry: {limit: 0}\n    syncOptions: [CreateNamespace=true]\n"}
+		env.namespaceCleanup(t, o.Namespace)
+		env.start(t, o, map[string]string{"hook.yaml": job("slow", "PreSync", "sleep 3600", 0, ""), "cm.yaml": configMap("c", 0, "")}, false)
+		env.waitApp(t, o.Name, "operation waiting for the hook", waitLong, func(a *model.Application) bool {
+			return opPhase(a) == "Running" && strings.Contains(opMsg(a), "completion of hook batch/Job/slow")
+		})
+		rep, code, _ := env.explain(t, "app", o.Name)
+		expectVerdict(t, rep, code, explain.VerdictWaiting, 2)
+		mustBlocker(t, rep, explain.RoleWaitingOn, "hook", "Job", "slow")
+		for _, b := range rep.Blockers {
+			if b.Role == explain.RoleWaitingOn && b.Ref.Kind == "Namespace" {
+				t.Fatalf("the synthetic Namespace result is stale, not a blocker: %+v", rep.Blockers)
+			}
+		}
+		if hasUnknown(rep, "which tasks the operation waits on") {
+			t.Fatalf("one task is named and one is proven: %+v", rep.Unknowns)
+		}
+		env.record(t, "createnamespace-hook", "app", o.Name)
+	})
+
+	// PruneLast: the prune that is still ahead explains why the operation is not finished.
+	scenario(t, "prune-last-pending", false, func(t *testing.T) {
+		o := appOpts{Name: "ase-prunelast", Path: "prunelast", Namespace: "ase-prunelast",
+			SyncPolicy: "  syncPolicy:\n    automated: {prune: true}\n    retry: {limit: 0}\n"}
+		env.start(t, o, map[string]string{
+			"web.yaml": deployment("web", 0, false, 0),
+			"old.yaml": configMap("old", 0, "    argocd.argoproj.io/sync-options: PruneLast=true"),
+		}, true)
+		env.waitApp(t, o.Name, "initial sync", waitLong, func(a *model.Application) bool {
+			return a.Status.Sync.Status == "Synced" && opPhase(a) == "Succeeded"
+		})
+		env.remove(t, o.Path+"/old.yaml")
+		env.put(t, o.Path+"/web.yaml", strings.Replace(deployment("web", 0, false, 0), "sleep\", \"3600", "sleep\", \"3601", 1))
+		env.refresh(o.Name)
+		env.waitApp(t, o.Name, "operation waiting on the Deployment with a PruneLast task ahead", waitLong, func(a *model.Application) bool {
+			return opPhase(a) == "Running" && strings.Contains(opMsg(a), "healthy state of apps/Deployment/web")
+		})
+		rep, code, _ := env.explain(t, "app", o.Name)
+		expectVerdict(t, rep, code, explain.VerdictWaiting, 2)
+		mustBlocker(t, rep, explain.RoleWaitingOn, "resource", "Deployment", "web")
+		if rep.Pending == nil || !contains(rep.Pending.Resources, "ConfigMap/old (to prune)") {
+			t.Fatalf("the PruneLast task must be pending: %+v", rep.Pending)
+		}
+	})
+
+	// BeforeHookCreation: the previous hook object is being deleted before the hook runs again.
+	scenario(t, "hook-deletion-wait", false, func(t *testing.T) {
+		o := appOpts{Name: "ase-hookdelwait", Path: "hookdelwait", Namespace: "ase-hookdelwait"}
+		env.start(t, o, map[string]string{"hook.yaml": job("once", "PreSync", "exit 0", 0, ""), "cm.yaml": configMap("c", 0, "")}, true)
+		env.waitApp(t, o.Name, "first sync", waitLong, func(a *model.Application) bool {
+			return a.Status.Sync.Status == "Synced" && opPhase(a) == "Succeeded"
+		})
+		// A finalizer of our own keeps the old hook object from going away.
+		if out, err := env.kubectl("", "-n", o.Namespace, "patch", "job", "once", "--type=merge", "-p", `{"metadata":{"finalizers":["ase/hold"]}}`); err != nil {
+			t.Fatalf("hold hook: %v %s", err, out)
+		}
+		t.Cleanup(func() {
+			_, _ = env.kubectl("", "-n", o.Namespace, "patch", "job", "once", "--type=merge", "-p", `{"metadata":{"finalizers":null}}`)
+		})
+		env.put(t, o.Path+"/cm.yaml", configMap("c", 0, "    changed: \"yes\""))
+		env.refresh(o.Name)
+		env.waitApp(t, o.Name, "operation waiting for the old hook to be deleted", waitLong, func(a *model.Application) bool {
+			return opPhase(a) == "Running" && strings.Contains(opMsg(a), "deletion of hook")
+		})
+		rep, code, _ := env.explain(t, "app", o.Name)
+		expectVerdict(t, rep, code, explain.VerdictWaiting, 2)
+		if rep.Operation.WaitReason != "hook-deletion" {
+			t.Fatalf("wait reason: %s", rep.Operation.WaitReason)
+		}
+		b := mustBlocker(t, rep, explain.RoleWaitingOn, "hook", "Job", "once")
+		if strings.Contains(b.Why, "pruned") {
+			t.Fatalf("a hook deletion is not a pruned resource: %s", b.Why)
+		}
+	})
+
+	// Opus B2: the Application is being deleted and a managed resource holds a finalizer.
+	scenario(t, "deleting-held-by-finalizer", false, func(t *testing.T) {
+		o := appOpts{Name: "ase-deleting", Path: "deleting", Namespace: "ase-deleting", Finalizers: true}
+		env.start(t, o, map[string]string{"cm.yaml": configMap("held", 0, "")}, true)
+		env.waitApp(t, o.Name, "Synced", waitLong, func(a *model.Application) bool {
+			return a.Status.Sync.Status == "Synced" && opPhase(a) == "Succeeded"
+		})
+		if out, err := env.kubectl("", "-n", o.Namespace, "patch", "configmap", "held", "--type=merge", "-p", `{"metadata":{"finalizers":["ase/hold"]}}`); err != nil {
+			t.Fatalf("hold: %v %s", err, out)
+		}
+		t.Cleanup(func() {
+			_, _ = env.kubectl("", "-n", o.Namespace, "patch", "configmap", "held", "--type=merge", "-p", `{"metadata":{"finalizers":null}}`)
+		})
+		if out, err := env.kubectl("", "-n", argoNS, "delete", "application", o.Name, "--wait=false"); err != nil {
+			t.Fatalf("delete: %v %s", err, out)
+		}
+		env.waitApp(t, o.Name, "deletionTimestamp on the Application", waitLong, func(a *model.Application) bool { return a.Metadata.DeletionTimestamp != nil })
+		rep, code, _ := env.explain(t, "app", o.Name)
+		expectVerdict(t, rep, code, explain.VerdictDeleting, 2)
+		b := mustBlocker(t, rep, explain.RoleWaitingOn, "resource", "ConfigMap", "held")
+		if !strings.Contains(b.Why, "ase/hold") {
+			t.Fatalf("the holding finalizer must be named: %s", b.Why)
+		}
+		if rep.Deleting == nil || !strings.HasPrefix(rep.Deleting.Cascade, "cascade") || len(rep.Deleting.Finalizers) == 0 {
+			t.Fatalf("%+v", rep.Deleting)
+		}
+		env.record(t, "deleting", "app", o.Name)
 	})
 
 	scenario(t, "comparison-error-invalid-manifest", false, func(t *testing.T) {
@@ -532,6 +696,14 @@ spec:
 				t.Fatalf("reason should say permission denied: %+v", u)
 			}
 		}
+		// An Application the token cannot read at all is an explicit unknown (exit 3), not a tool error.
+		cmd := exec.Command(env.Bin, "-o", "json", "--insecure", "app", child)
+		cmd.Env = append(os.Environ(), "ARGOCD_SERVER="+env.argoAdr, "ARGOCD_AUTH_TOKEN="+tok)
+		out, err := cmd.CombinedOutput()
+		ee, ok := err.(*exec.ExitError)
+		if !ok || ee.ExitCode() != 3 || !strings.Contains(string(out), "permission denied") {
+			t.Fatalf("unreadable root application: want exit 3, got %v: %s", err, out)
+		}
 		env.record(t, "rbac-limited", "app", parent)
 	})
 }
@@ -584,4 +756,13 @@ func hasBlockingFinding(r *explain.Report, sub string) bool {
 		}
 	}
 	return false
+}
+
+func waveOf(a *model.Application, name string) int64 {
+	for _, r := range a.Status.Resources {
+		if r.Name == name {
+			return r.SyncWave
+		}
+	}
+	return -1
 }

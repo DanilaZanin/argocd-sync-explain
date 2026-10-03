@@ -415,3 +415,22 @@ func (e *Env) explainWithToken(t *testing.T, token string, args ...string) (*exp
 	}
 	return &rep, code
 }
+
+// namespaceCleanup deletes a namespace the Application creates itself (CreateNamespace=true).
+func (e *Env) namespaceCleanup(t *testing.T, ns string) {
+	t.Cleanup(func() { _, _ = e.kubectl("", "delete", "namespace", ns, "--wait=false", "--ignore-not-found") })
+}
+
+// jobCreated returns the creationTimestamp of a Job, or the zero time when it does not exist.
+func (e *Env) jobCreated(t *testing.T, ns, name string) time.Time {
+	t.Helper()
+	out, err := e.kubectl("", "-n", ns, "get", "job", name, "--ignore-not-found", "-o", "jsonpath={.metadata.creationTimestamp}")
+	if err != nil || strings.TrimSpace(out) == "" {
+		return time.Time{}
+	}
+	ts, err := time.Parse(time.RFC3339, strings.TrimSpace(out))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return ts
+}
