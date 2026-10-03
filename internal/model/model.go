@@ -63,6 +63,7 @@ type Metadata struct {
 	Annotations       map[string]string `json:"annotations,omitempty"`
 	OwnerReferences   []OwnerRef        `json:"ownerReferences,omitempty"`
 	DeletionTimestamp *time.Time        `json:"deletionTimestamp,omitempty"`
+	Finalizers        []string          `json:"finalizers,omitempty"`
 }
 
 // Destination is spec.destination.
@@ -298,6 +299,9 @@ type Snapshot struct {
 	Project     *AppProject
 	Tree        *ResourceTree
 	Events      []Event
+	// Live holds live-object details of managed resources, read only for an Application that is
+	// being deleted (key: group/kind/namespace/name).
+	Live map[string]*LiveObject
 	// Children are explained independently, keyed by "namespace/name".
 	Children map[string]*Snapshot
 	// Unavailable maps a data kind (tree, project, events, version,
@@ -307,3 +311,10 @@ type Snapshot struct {
 
 // Key returns "namespace/name".
 func (a Application) Key() string { return a.Metadata.Namespace + "/" + a.Metadata.Name }
+
+// LiveObject is what the deletion explanation needs from a live managed resource.
+type LiveObject struct {
+	Exists            bool       `json:"exists"`
+	DeletionTimestamp *time.Time `json:"deletionTimestamp,omitempty"`
+	Finalizers        []string   `json:"finalizers,omitempty"`
+}

@@ -77,11 +77,17 @@ func ResolveConn(server, token, cfgPath, ctxName string, insecure, plainText boo
 		if cx.Name != ctxName {
 			continue
 		}
+		explicit := c.Server != ""
+		// The config only describes cx.Server. A token or TLS setting from it must never be sent
+		// to a different server that the user named explicitly.
+		if explicit && c.Server != cx.Server {
+			break
+		}
 		if c.Server == "" {
 			c.Server = cx.Server
 		}
 		for _, s := range lc.Servers {
-			if s.Server == cx.Server && s.Server == c.Server {
+			if s.Server == cx.Server {
 				c.Insecure = c.Insecure || s.Insecure
 				c.PlainText = c.PlainText || s.PlainText
 			}

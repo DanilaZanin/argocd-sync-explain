@@ -121,7 +121,7 @@
         "name": "ase-lua-child"
       },
       "relation": "parent-waits",
-      "evidence": "the parent's running operation waits on this child Application (task hookPhase=Running); the child's health is Progressing",
+      "evidence": "the parent's running operation waits on this child Application (task hookPhase=Running) and its health is assessed: Progressing",
       "health": {
         "status": "Progressing",
         "source": "resource tree node health"

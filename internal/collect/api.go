@@ -73,7 +73,8 @@ func (c *APIClient) get(ctx context.Context, path string, q url.Values, out any)
 		return err
 	}
 	if resp.StatusCode/100 != 2 {
-		return &HTTPError{Status: resp.StatusCode, Body: string(body), Path: path}
+		// Secrets are removed before the body is truncated or shown anywhere.
+		return &HTTPError{Status: resp.StatusCode, Body: Redact(string(body), c.Token), Path: path}
 	}
 	return json.Unmarshal(body, out)
 }
@@ -81,8 +82,10 @@ func (c *APIClient) get(ctx context.Context, path string, q url.Values, out any)
 func unavail(err error, what string) error {
 	if he, ok := err.(*HTTPError); ok {
 		switch he.Status {
-		case http.StatusForbidden, http.StatusUnauthorized:
-			return &ErrUnavailable{Reason: fmt.Sprintf("%s: permission denied (HTTP %d); the token's RBAC does not allow reading it", what, he.Status)}
+		case http.StatusForbidden:
+			return &ErrUnavailable{Reason: fmt.Sprintf("%s: permission denied (HTTP 403); the token's RBAC does not allow reading it", what), Denied: true}
+		case http.StatusUnauthorized:
+			return &ErrUnavailable{Reason: fmt.Sprintf("%s: authentication failed (HTTP 401); the token is missing, expired or invalid", what)}
 		case http.StatusNotFound:
 			return &ErrUnavailable{Reason: fmt.Sprintf("%s: not found (HTTP 404)", what)}
 		}
@@ -150,5 +153,32 @@ func (c *APIClient) Events(ctx context.Context, ns, name string) ([]model.Event,
 	if err := c.get(ctx, "/api/v1/applications/"+url.PathEscape(name)+"/events", nsQuery(ns), &l); err != nil {
 		return nil, unavail(err, "events")
 	}
+	sortEvents(l.Items)
 	return l.Items, nil
+}
+
+// Live implements LiveSource: the live manifest of one managed resource.
+func (c *APIClient) Live(ctx context.Context, ns, name string, rs model.ResourceStatus) (*model.LiveObject, error) {
+	q := nsQuery(ns)
+	q.Set("namespace", rs.Namespace)
+	q.Set("resourceName", rs.Name)
+	q.Set("version", rs.Version)
+	q.Set("group", rs.Group)
+	q.Set("kind", rs.Kind)
+	var out struct {
+		Manifest string `json:"manifest"`
+	}
+	if err := c.get(ctx, "/api/v1/applications/"+url.PathEscape(name)+"/resource", q, &out); err != nil {
+		if he, ok := err.(*HTTPError); ok && (he.Status == http.StatusNotFound || strings.Contains(he.Body, "not found")) {
+			return &model.LiveObject{Exists: false}, nil
+		}
+		return nil, unavail(err, "live "+rs.Kind+"/"+rs.Name)
+	}
+	var obj struct {
+		Metadata model.Metadata `json:"metadata"`
+	}
+	if err := json.Unmarshal([]byte(out.Manifest), &obj); err != nil {
+		return nil, fmt.Errorf("live %s/%s: %w", rs.Kind, rs.Name, err)
+	}
+	return &model.LiveObject{Exists: true, DeletionTimestamp: obj.Metadata.DeletionTimestamp, Finalizers: obj.Metadata.Finalizers}, nil
 }

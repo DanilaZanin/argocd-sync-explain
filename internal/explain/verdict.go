@@ -30,16 +30,21 @@ func analyzeChildren(s *model.Snapshot, r *Report, depth int) {
 		ci := ChildInfo{Ref: ref, Source: ".status.resources[] + resource tree"}
 		h := healthFor(s, lookup)
 		ci.Health = h
-		waiting := false
+		waiting, failedHere := false, false
 		for _, b := range r.Blockers {
-			if b.Type == "child-application" && b.Ref.Name == ref.Name {
-				waiting = true
+			if b.Type == "child-application" && sameRef(b.Ref, lookup) {
+				waiting = waiting || (b.Role == RoleWaitingOn && r.Operation.Kind == OpRunning)
+				failedHere = failedHere || b.Role == RoleFailed
 			}
 		}
+		assessed := h.Status != Unknown && h.Status != "none-assessed"
 		switch {
-		case waiting:
+		case waiting && assessed:
 			ci.Relation = RelWaits
-			ci.Evidence = "the parent's running operation waits on this child Application (task hookPhase=Running); the child's health is " + h.Status
+			ci.Evidence = "the parent's running operation waits on this child Application (task hookPhase=Running) and its health is assessed: " + h.Status
+		case waiting:
+			ci.Relation = RelUnknown
+			ci.Evidence = "the operation reports waiting on this child, but its health assessment is not visible: " + h.Status + " " + h.Message
 		case h.Status == Unknown:
 			ci.Relation = RelUnknown
 			ci.Evidence = "cannot tell whether Argo CD assesses Application health here: " + h.Message
@@ -50,9 +55,16 @@ func analyzeChildren(s *model.Snapshot, r *Report, depth int) {
 			ci.Relation = RelCanWait
 			ci.Evidence = "Argo CD assesses this child's health (" + h.Status + "), so a parent sync with later waves waits for it to be Healthy"
 		}
+		if failedHere {
+			ci.Evidence += "; the parent's operation failed on this child"
+		}
 		key := ns + "/" + ref.Name
-		if cs, ok := s.Children[key]; ok && depth < maxChildDepth {
-			ci.Report = explain(cs, depth+1)
+		if cs, ok := s.Children[key]; ok {
+			if depth < maxChildDepth {
+				ci.Report = explain(cs, depth+1)
+			} else {
+				r.unknown("child application "+key, fmt.Sprintf("depth limit of %d levels reached; its descendants are not explained", maxChildDepth))
+			}
 		} else if why, ok := s.Unavailable["child:"+key]; ok {
 			r.unknown("child application "+key, why)
 		}
@@ -66,18 +78,36 @@ func pickVerdict(s *model.Snapshot, r *Report) {
 		r.Verdict = v
 		r.Summary = summary
 	}
+	switch {
+	case a.Metadata.DeletionTimestamp != nil:
+		set(VerdictDeleting, deletingSummary(r))
+	}
 	switch r.Operation.Kind {
 	case OpQueued:
+		if r.Verdict != "" {
+			break
+		}
 		set(VerdictQueued, "A sync was requested and the application controller has not started it yet.")
 	case OpTerminating:
-		set(VerdictTerminating, "The sync operation is being terminated.")
+		if r.Verdict == "" {
+			set(VerdictTerminating, "The sync operation is being terminated.")
+		}
 	case OpRunning:
-		set(VerdictWaiting, waitingSummary(r))
+		switch {
+		case r.Verdict != "":
+		case len(r.Blockers) == 0:
+			set(VerdictUnknown, "The sync operation is running, but nothing it waits on is recorded and the message gives no recognised reason.")
+		default:
+			set(VerdictWaiting, waitingSummary(r))
+		}
 	case OpBackoff:
+		if r.Verdict != "" {
+			break
+		}
 		set(VerdictRetrying, fmt.Sprintf("The last sync attempt failed; the operation is in retry backoff (attempt %d), next attempt not before %s.",
 			r.Operation.RetryCount, orUnknown(r.Operation.NextRetryNotBefore)))
 	case OpFinished:
-		if r.Operation.Phase == model.PhaseFailed || r.Operation.Phase == model.PhaseError {
+		if r.Verdict == "" && (r.Operation.Phase == model.PhaseFailed || r.Operation.Phase == model.PhaseError) {
 			set(VerdictFailed, failedSummary(r))
 		}
 	}
@@ -96,7 +126,7 @@ func pickVerdict(s *model.Snapshot, r *Report) {
 		case a.Status.Health.Status == "Progressing":
 			set(VerdictProgressing, progressingSummary(r))
 		case a.Status.Health.Status == "Degraded":
-			set(VerdictDegraded, "Synced but Degraded; the last operation is not the cause (it "+lastOpText(r)+").")
+			set(VerdictDegraded, "Synced but Degraded now; the last operation "+lastOpText(r)+" and sync itself is not blocked. See the observations for the resources that are Degraded.")
 		case a.Status.Health.Status == "":
 			set(VerdictUnknown, "Health status is not set.")
 		default:
@@ -251,4 +281,24 @@ func analyzeUnhealthy(s *model.Snapshot, r *Report) {
 	if !known && len(s.App.Status.Resources) > 0 {
 		r.unknown("resource health", "per-resource health is not stored in the Application (status.resourceHealthSource=appTree); needs the Argo CD API")
 	}
+}
+
+func deletingSummary(r *Report) string {
+	d := r.Deleting
+	if d == nil {
+		return "The Application is being deleted."
+	}
+	var held []string
+	for _, b := range r.Blockers {
+		if b.Role == RoleWaitingOn {
+			held = append(held, b.Ref.Kind+"/"+b.Ref.Name)
+		}
+	}
+	msg := "The Application is being deleted (deletionTimestamp " + d.Since + ") but still exists."
+	if len(held) > 0 {
+		msg += " Held by: " + strings.Join(held, ", ") + "."
+	} else {
+		msg += " What holds it is not fully visible (see remaining resources and unknowns)."
+	}
+	return msg
 }

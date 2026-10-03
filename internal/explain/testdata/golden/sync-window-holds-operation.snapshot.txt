@@ -29,5 +29,4 @@ Sync windows (Argo CD 3.5 rules (syncOverrun supported)): canSync=false, a deny 
   matches: deny schedule="* * * * *" duration=1h tz=UTC manualSync=false
 
 Notes:
-  the operation synced revision main, the latest comparison is against fb31b708  [.status.operationState.syncResult.revision vs .status.sync.revision]
   field-level differences are not shown; run `argocd app diff ase-denym`  [-]

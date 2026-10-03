@@ -107,6 +107,14 @@ func (p *printer) report(r *explain.Report, in string, top bool) {
 			p.f(in, "  under %s: %s%s%s", o.Under, display(o.Ref), h, info)
 		}
 	}
+	if d := r.Deleting; d != nil {
+		p.f(in, "")
+		p.f(in, "Deletion (since %s): %s", d.Since, d.Cascade)
+		p.f(in, "  finalizers on the Application: %s", strings.Join(d.Finalizers, ", "))
+		for _, x := range d.Remaining {
+			p.f(in, "  remaining: %s %s  [%s]", display(x.Ref), x.State, x.Source)
+		}
+	}
 	if len(r.OutOfSync) > 0 {
 		p.f(in, "")
 		p.f(in, "OutOfSync resources:")
@@ -158,7 +166,7 @@ func (p *printer) report(r *explain.Report, in string, top bool) {
 	}
 	for _, c := range r.Children {
 		p.f(in, "")
-		healthy := c.Report != nil && c.Report.Verdict == explain.VerdictHealthy && len(c.Report.Children) == 0
+		healthy := c.Report != nil && c.Report.Verdict == explain.VerdictHealthy && len(c.Report.Children) == 0 && len(c.Report.Unknowns) == 0
 		p.f(in, "Child Application %s: %s", c.Ref.Name, c.Relation)
 		p.f(in, "  %s", c.Evidence)
 		if c.Report != nil && !healthy {

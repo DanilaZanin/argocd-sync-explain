@@ -13,6 +13,7 @@ const (
 	VerdictTerminating = "terminating"
 	VerdictFailed      = "failed"
 	VerdictError       = "error"
+	VerdictDeleting    = "deleting"
 	VerdictOutOfSync   = "out-of-sync"
 	VerdictProgressing = "progressing"
 	VerdictDegraded    = "degraded"
@@ -59,7 +60,11 @@ type Report struct {
 	Notes       []Note         `json:"notes,omitempty"`
 	Events      []EventInfo    `json:"events,omitempty"`
 	Children    []ChildInfo    `json:"children,omitempty"`
+	Deleting    *DeletingInfo  `json:"deleting,omitempty"`
 	Unknowns    []UnknownItem  `json:"unknowns,omitempty"`
+
+	waveOK  bool
+	waveWhy string
 }
 
 // AppInfo identifies the application.
@@ -239,4 +244,21 @@ const (
 type UnknownItem struct {
 	What   string `json:"what"`
 	Reason string `json:"reason"`
+}
+
+// DeletingInfo explains an Application that has a deletionTimestamp but still exists.
+type DeletingInfo struct {
+	Since      string         `json:"since"`
+	Finalizers []string       `json:"finalizers"`
+	Cascade    string         `json:"cascade"`
+	Remaining  []RemainingRes `json:"remaining"`
+	Basis      string         `json:"basis"`
+}
+
+// RemainingRes is a managed resource that may still hold the deletion.
+type RemainingRes struct {
+	Ref        Ref      `json:"ref"`
+	State      string   `json:"state"`
+	Finalizers []string `json:"finalizers,omitempty"`
+	Source     string   `json:"source"`
 }

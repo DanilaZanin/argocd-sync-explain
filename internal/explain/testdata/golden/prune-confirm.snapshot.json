@@ -59,11 +59,12 @@
     }
   ],
   "pending": {
-    "count": 1,
+    "count": 2,
     "waves": [
       0
     ],
     "resources": [
+      "ConfigMap/gone (to prune)",
       "ConfigMap/keep"
     ],
     "basis": ".status.resources minus .status.operationState.syncResult.resources",

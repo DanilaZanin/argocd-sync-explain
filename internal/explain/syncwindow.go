@@ -3,6 +3,7 @@ package explain
 import (
 	"fmt"
 	"time"
+	_ "time/tzdata" // a valid zone name must never silently become UTC on a host without a tz database
 
 	"github.com/gobwas/glob"
 	"github.com/robfig/cron/v3"
@@ -33,6 +34,7 @@ type WindowEval struct {
 	Reason         string
 	OverrunApplied bool
 	Err            string
+	BadZones       []string
 }
 
 func globMatch(pattern, val string) bool {
@@ -112,7 +114,23 @@ func tzOffset(w model.SyncWindow, at time.Time) time.Duration {
 	return time.Duration(off) * time.Second
 }
 
-func windowActive(w model.SyncWindow, at time.Time) (bool, error) {
+// badZones lists time zone names that do not exist; Argo CD treats them as UTC.
+func badZones(ws []model.SyncWindow) []string {
+	var out []string
+	for _, w := range ws {
+		if w.TimeZone == "" {
+			continue
+		}
+		if _, err := time.LoadLocation(w.TimeZone); err != nil {
+			out = append(out, w.TimeZone)
+		}
+	}
+	return out
+}
+
+// windowActive mirrors SyncWindow.active. Argo CD 3.5.3 takes the zone offset at the moment of the
+// check (time.Now()), even when it re-checks a past start time, so offAt is always "now".
+func windowActive(w model.SyncWindow, at, offAt time.Time) (bool, error) {
 	at = at.UTC()
 	sched, err := cronParser.Parse(w.Schedule)
 	if err != nil {
@@ -122,14 +140,14 @@ func windowActive(w model.SyncWindow, at time.Time) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("cannot parse duration '%s': %w", w.Duration, err)
 	}
-	off := tzOffset(w, at)
+	off := tzOffset(w, offAt)
 	next := sched.Next(at.Add(off - dur))
 	return next.Before(at.Add(off)), nil
 }
 
-func activeSet(ws []model.SyncWindow, at time.Time) (act []model.SyncWindow, inactiveAllow []model.SyncWindow, err error) {
+func activeSet(ws []model.SyncWindow, at, offAt time.Time) (act []model.SyncWindow, inactiveAllow []model.SyncWindow, err error) {
 	for _, w := range ws {
-		a, e := windowActive(w, at)
+		a, e := windowActive(w, at, offAt)
 		if e != nil {
 			return nil, nil, e
 		}
@@ -203,11 +221,11 @@ func splitKinds(ws []model.SyncWindow) (deny, allow []model.SyncWindow) {
 }
 
 // canSyncAt mirrors SyncWindows.canSyncAtTime (no overrun consideration).
-func canSyncAt(ws []model.SyncWindow, manual bool, at time.Time) (bool, error) {
+func canSyncAt(ws []model.SyncWindow, manual bool, at, offAt time.Time) (bool, error) {
 	if len(ws) == 0 {
 		return true, nil
 	}
-	act, inactiveAllow, err := activeSet(ws, at)
+	act, inactiveAllow, err := activeSet(ws, at, offAt)
 	if err != nil {
 		return false, err
 	}
@@ -233,11 +251,12 @@ func EvalWindows(proj *model.AppProject, app model.Application, now time.Time, i
 	}
 	matched := matchWindows(proj.Spec.SyncWindows, app)
 	ev.Matched = matched
+	ev.BadZones = badZones(matched)
 	if len(matched) == 0 {
 		ev.Reason = "no sync window matches this application"
 		return ev
 	}
-	act, inactiveAllow, err := activeSet(matched, now)
+	act, inactiveAllow, err := activeSet(matched, now, now)
 	if err != nil {
 		ev.CanSync = false
 		ev.Err = err.Error()
@@ -251,7 +270,7 @@ func EvalWindows(proj *model.AppProject, app model.Application, now time.Time, i
 		if !rules.SyncOverrun || opStart == nil || opStart.IsZero() || !allOverrun(kindForOverrun, kind) {
 			return false
 		}
-		ok, e := canSyncAt(matched, isManual, *opStart)
+		ok, e := canSyncAt(matched, isManual, *opStart, now)
 		return e == nil && ok
 	}
 

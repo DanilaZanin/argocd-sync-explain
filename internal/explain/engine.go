@@ -45,9 +45,10 @@ func explain(s *model.Snapshot, depth int) *Report {
 		}
 	}
 	for k, v := range s.Unavailable {
-		r.Unknowns = append(r.Unknowns, UnknownItem{What: k, Reason: v})
+		r.unknown(strings.Replace(k, "child:", "child application ", 1), v)
 	}
 
+	r.waveOK, r.waveWhy = comparisonMatchesOperation(s)
 	r.Operation = classify(s, r)
 	switch r.Operation.Kind {
 	case OpQueued:
@@ -63,6 +64,7 @@ func explain(s *model.Snapshot, depth int) *Report {
 	}
 
 	analyzeConditions(s, r)
+	analyzeDeleting(s, r)
 	analyzeOutOfSync(s, r)
 	analyzeWindows(s, r)
 	if r.Operation.Kind == OpNone || r.Operation.Kind == OpFinished || r.Operation.Kind == OpQueued ||
@@ -348,14 +350,34 @@ func healthFor(s *model.Snapshot, ref Ref) *Health {
 	return &Health{Status: Unknown, Message: reason, Source: "-"}
 }
 
-func waveFor(a model.Application, ref Ref, hook bool) string {
-	if rs := findStatus(a, ref); rs != nil && !rs.Hook {
+func waveFor(s *model.Snapshot, r *Report, ref Ref, hook bool) string {
+	if !r.waveOK {
+		return Unknown + " (" + r.waveWhy + ")"
+	}
+	if rs := findStatus(s.App, ref); rs != nil && !rs.Hook {
 		return strconv.FormatInt(rs.SyncWave, 10)
 	}
 	if hook {
 		return Unknown + " (hook waves are annotations on the manifest, not recorded in the Application)"
 	}
 	return Unknown + " (not listed in .status.resources)"
+}
+
+// comparisonMatchesOperation says whether the waves in status.resources, which come from the
+// latest comparison, belong to the revision and sources the running operation uses (A2).
+func comparisonMatchesOperation(s *model.Snapshot) (bool, string) {
+	st := s.App.Status.OperationState
+	if st == nil || st.SyncResult == nil {
+		return true, ""
+	}
+	opRevs, cmp := syncResultRevisions(st.SyncResult), comparedRevisions(s.App)
+	if len(opRevs) > 0 && resolved(opRevs) && len(cmp) > 0 && strings.Join(opRevs, ",") != strings.Join(cmp, ",") {
+		return false, fmt.Sprintf("the operation runs revision %s but waves come from the latest comparison, revision %s", shortList(opRevs), shortList(cmp))
+	}
+	if rs := resultSources(st.SyncResult); len(rs) > 0 && !sourcesEqual(specSources(s.App), rs) {
+		return false, "the Application source changed since the operation started, so the current waves may not be the operation's"
+	}
+	return true, ""
 }
 
 // ---- running / waiting (A3) ----
@@ -393,6 +415,8 @@ func analyzeRunning(s *model.Snapshot, r *Report) {
 			r.Operation.WaitReason = "hook-completion"
 		case "healthy state of":
 			r.Operation.WaitReason = "resource-health"
+		case "deletion of hook":
+			r.Operation.WaitReason = "hook-deletion"
 		default:
 			r.Operation.WaitReason = "deletion"
 		}
@@ -410,7 +434,7 @@ func analyzeRunning(s *model.Snapshot, r *Report) {
 		b := Blocker{
 			Role: RoleWaitingOn, Ref: ref, ID: ref.ID(), SyncPhase: x.SyncPhase,
 			HookType: x.HookType, HookPhase: x.HookPhase, Result: x.Status,
-			Wave: waveFor(s.App, ref, isHook), Message: x.Message,
+			Wave: waveFor(s, r, ref, isHook), Message: x.Message,
 			Source: ".status.operationState.syncResult.resources",
 		}
 		switch {
@@ -450,6 +474,9 @@ func analyzeRunning(s *model.Snapshot, r *Report) {
 			case "prune-confirmation":
 				b.Type = "prune-confirmation"
 				b.Why = "the controller reports it waits for confirmation to prune this resource (Prune=confirm)"
+			case "hook-deletion":
+				b.Type = "hook"
+				b.Why = "the controller waits for an existing hook object to finish deleting (hook delete policy, e.g. BeforeHookCreation, before the hook runs again); its hookType is not in the message"
 			case "deletion":
 				b.Type = "resource"
 				b.Why = "the controller waits for this pruned resource to finish deleting"
@@ -460,6 +487,8 @@ func analyzeRunning(s *model.Snapshot, r *Report) {
 			r.Blockers = append(r.Blockers, b)
 		}
 	}
+	// Failed results can exist while the operation is still Running (SyncFail hooks run).
+	collectFailures(s, r)
 	if len(r.Blockers) == 0 {
 		r.unknown("what the operation waits on",
 			"operation is Running but no task with hookPhase=Running is recorded and the message does not name one (it may have just started or be in the dry-run)")
@@ -485,8 +514,11 @@ func buildPosition(r *Report, results []model.ResourceResult) {
 	if len(phases) > 0 {
 		pos.Phase = joinKeys(phases)
 	}
-	if len(waves) > 0 {
+	if len(waves) > 0 && r.waveOK {
 		pos.Wave = joinKeys(waves)
+	}
+	if !r.waveOK {
+		pos.Basis += "; wave unknown: " + r.waveWhy
 	}
 	if len(results) == 0 {
 		pos.Basis += "; no results recorded yet"
@@ -508,6 +540,10 @@ func buildPending(s *model.Snapshot, r *Report, results []model.ResourceResult) 
 	if op != nil && len(op.Resources) > 0 {
 		return // selective sync, noted in opNotes
 	}
+	if !r.waveOK {
+		r.unknown("pending tasks", r.waveWhy)
+		return
+	}
 	seen := map[string]bool{}
 	for _, x := range results {
 		seen[refOfResult(x).ID()] = true
@@ -524,10 +560,15 @@ func buildPending(s *model.Snapshot, r *Report, results []model.ResourceResult) 
 	waveSet := map[int64]bool{}
 	for _, rs := range s.App.Status.Resources {
 		ref := refOfStatus(rs)
-		if rs.Hook || rs.RequiresPruning || seen[ref.ID()] || (outOfSyncOnly && rs.Status == "Synced") {
+		prune := rs.RequiresPruning
+		if rs.Hook || (prune && (op == nil || !op.Prune)) || seen[ref.ID()] || (outOfSyncOnly && rs.Status == "Synced") {
 			continue
 		}
-		pi.Resources = append(pi.Resources, ref.Kind+"/"+ref.Name)
+		label := ref.Kind + "/" + ref.Name
+		if prune {
+			label += " (to prune)"
+		}
+		pi.Resources = append(pi.Resources, label)
 		waveSet[rs.SyncWave] = true
 	}
 	pi.Count = len(pi.Resources)
@@ -559,7 +600,7 @@ func opNotes(s *model.Snapshot, r *Report) {
 	if st.SyncResult != nil {
 		opRevs := syncResultRevisions(st.SyncResult)
 		cmp := comparedRevisions(s.App)
-		if len(opRevs) > 0 && len(cmp) > 0 && strings.Join(opRevs, ",") != strings.Join(cmp, ",") {
+		if len(opRevs) > 0 && resolved(opRevs) && len(cmp) > 0 && strings.Join(opRevs, ",") != strings.Join(cmp, ",") {
 			r.Notes = append(r.Notes, Note{Code: "revision-mismatch",
 				Text:   fmt.Sprintf("the operation synced revision %s, the latest comparison is against %s", shortList(opRevs), shortList(cmp)),
 				Source: ".status.operationState.syncResult.revision vs .status.sync.revision"})
@@ -636,7 +677,7 @@ func collectFailures(s *model.Snapshot, r *Report) {
 		ref := refOfResult(x)
 		b := Blocker{Role: RoleFailed, Ref: ref, ID: ref.ID(), SyncPhase: x.SyncPhase, HookType: x.HookType,
 			HookPhase: x.HookPhase, Result: x.Status, Message: x.Message,
-			Wave: waveFor(s.App, ref, x.HookType != ""), Source: ".status.operationState.syncResult.resources"}
+			Wave: waveFor(s, r, ref, x.HookType != ""), Source: ".status.operationState.syncResult.resources"}
 		if x.HookType != "" {
 			b.Type = "hook"
 			b.Why = fmt.Sprintf("%s hook ended with phase %s", x.HookType, orUnknown(x.HookPhase))
@@ -795,6 +836,9 @@ func analyzeWindows(s *model.Snapshot, r *Report) {
 		wi.Matching = append(wi.Matching, fmt.Sprintf("%s schedule=%q duration=%s tz=%s manualSync=%t", w.Kind, w.Schedule, w.Duration, orUTC(w.TimeZone), w.ManualSync))
 	}
 	r.SyncWindows = wi
+	for _, z := range ev.BadZones {
+		r.Notes = append(r.Notes, Note{Code: "unknown-time-zone", Text: fmt.Sprintf("sync window time zone %q does not exist; Argo CD evaluates that window in UTC", z), Source: "AppProject .spec.syncWindows[].timeZone"})
+	}
 }
 
 func orUTC(s string) string {
@@ -818,11 +862,11 @@ func analyzeEvents(s *model.Snapshot, r *Report) {
 	}
 }
 
-// currentTasks picks the results the operation is waiting on now. The
-// controller names the first waiting task in the operation message and counts
-// the rest; a result can stay marked Running after its step is over (observed:
-// the Namespace created by CreateNamespace=true), so results that are not in
-// the named task's syncPhase and wave are reported as stale, not as blockers.
+// currentTasks picks the results the operation is waiting on now. The controller names the
+// first waiting task in the operation message and counts the rest. A result can stay marked
+// Running after its step is over (observed: the Namespace created by CreateNamespace=true), so
+// when the count disagrees only the named task, parallel SyncFail tasks, and tasks of the same
+// phase with a known and equal wave are kept. An unknown wave proves nothing.
 func currentTasks(s *model.Snapshot, r *Report, results []model.ResourceResult, parsed bool, wref Ref, more int) []model.ResourceResult {
 	var running []model.ResourceResult
 	for _, x := range results {
@@ -840,18 +884,25 @@ func currentTasks(s *model.Snapshot, r *Report, results []model.ResourceResult, 
 			break
 		}
 	}
-	if named == nil {
+	want := 1 + more
+	if named == nil || len(running) == want {
 		return running
 	}
-	nref := refOfResult(*named)
-	nwave := waveFor(s.App, nref, named.HookType != "")
+	nwave := waveFor(s, r, refOfResult(*named), named.HookType != "")
 	var keep, stale []model.ResourceResult
+	proven := 0
 	for _, x := range running {
-		w := waveFor(s.App, refOfResult(x), x.HookType != "")
-		sameWave := !isNumber(w) || !isNumber(nwave) || w == nwave
-		if x.SyncPhase == named.SyncPhase && sameWave {
+		w := waveFor(s, r, refOfResult(x), x.HookType != "")
+		switch {
+		case (x.Group == named.Group && x.Kind == named.Kind && x.Name == named.Name && x.SyncPhase == named.SyncPhase):
 			keep = append(keep, x)
-		} else {
+			proven++
+		case x.SyncPhase == "SyncFail":
+			keep = append(keep, x)
+		case x.SyncPhase == named.SyncPhase && isNumber(w) && isNumber(nwave) && w == nwave:
+			keep = append(keep, x)
+			proven++
+		default:
 			stale = append(stale, x)
 		}
 	}
@@ -861,15 +912,27 @@ func currentTasks(s *model.Snapshot, r *Report, results []model.ResourceResult, 
 			names = append(names, fmt.Sprintf("%s/%s (syncPhase %s)", x.Kind, x.Name, orUnknown(x.SyncPhase)))
 		}
 		r.Notes = append(r.Notes, Note{Code: "stale-running-result",
-			Text:   "results still marked Running that are not in the step the controller reports waiting on: " + strings.Join(names, ", "),
+			Text:   "results still marked Running that the controller message does not account for, not treated as blockers: " + strings.Join(names, ", "),
 			Source: ".status.operationState.syncResult.resources vs .status.operationState.message"})
 	}
-	if want := 1 + more; len(keep) != want {
-		r.Notes = append(r.Notes, Note{Code: "task-count-mismatch",
-			Text:   fmt.Sprintf("the controller message counts %d waiting task(s); %d matching result(s) are recorded", want, len(keep)),
-			Source: ".status.operationState.message"})
+	if proven != want {
+		r.unknown("which tasks the operation waits on", fmt.Sprintf("the controller counts %d waiting task(s) and %d are proven; only the named task is certain (parallel SyncFail hooks are shown in addition)", want, proven))
 	}
 	return keep
+}
+
+var commitLike = regexp.MustCompile(`^[0-9a-f]{7,64}$`)
+
+// resolved reports whether every revision is a resolved commit. An operation that was held before
+// the controller resolved its revision still carries the symbolic one (e.g. "main"), which cannot be
+// compared with the commit of the latest comparison.
+func resolved(revs []string) bool {
+	for _, r := range revs {
+		if !commitLike.MatchString(r) {
+			return false
+		}
+	}
+	return true
 }
 
 func isNumber(s string) bool {

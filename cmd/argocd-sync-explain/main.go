@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -131,7 +132,7 @@ func run(args []string, stdout, stderr *os.File, env func(string) string) int {
 				return 1
 			}
 			defer stop()
-			conn.Server, conn.Insecure, conn.PlainText = addr, true, false
+			conn = forwarded(conn, addr)
 			if conn.Token == "" {
 				conn.Token = env("ARGOCD_AUTH_TOKEN")
 			}
@@ -163,7 +164,14 @@ func run(args []string, stdout, stderr *os.File, env func(string) string) int {
 
 	snap, err := collect.Collect(ctx, src, *namespace, pos[1], time.Now())
 	if err != nil {
-		fmt.Fprintln(stderr, "error:", err)
+		msg := collect.Redact(err.Error(), conn.Token)
+		var u *collect.ErrUnavailable
+		if errors.As(err, &u) && u.Denied {
+			// Not a tool failure: the data is not visible to this identity, which is an explicit unknown.
+			fmt.Fprintln(stderr, "unknown:", msg)
+			return 3
+		}
+		fmt.Fprintln(stderr, "error:", msg)
 		return 1
 	}
 	rep := explain.Explain(snap)
@@ -177,4 +185,13 @@ func run(args []string, stdout, stderr *os.File, env func(string) string) int {
 		return 1
 	}
 	return rep.ExitCode
+}
+
+// forwarded points the connection at the local end of a port-forward. TLS verification is skipped
+// (the certificate is for the service name, not 127.0.0.1); an explicit --plaintext, for an
+// argocd-server running with server.insecure, is kept.
+func forwarded(c collect.Conn, addr string) collect.Conn {
+	c.Server = addr
+	c.Insecure = true
+	return c
 }

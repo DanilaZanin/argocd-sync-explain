@@ -17,6 +17,7 @@ import (
 var (
 	gvrApp     = schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "applications"}
 	gvrProject = schema.GroupVersionResource{Group: "argoproj.io", Version: "v1alpha1", Resource: "appprojects"}
+	gvrEvent   = schema.GroupVersionResource{Group: "", Version: "v1", Resource: "events"}
 	gvrDeploy  = schema.GroupVersionResource{Group: "apps", Version: "v1", Resource: "deployments"}
 )
 
@@ -39,7 +40,9 @@ func (k *KubeSource) Mode() string { return "kubeconfig" }
 func kerr(err error, what string) error {
 	switch {
 	case apierrors.IsForbidden(err):
-		return &ErrUnavailable{Reason: what + ": forbidden by Kubernetes RBAC"}
+		return &ErrUnavailable{Reason: what + ": forbidden by Kubernetes RBAC", Denied: true}
+	case apierrors.IsUnauthorized(err):
+		return &ErrUnavailable{Reason: what + ": authentication to the Kubernetes API failed"}
 	case apierrors.IsNotFound(err):
 		return &ErrUnavailable{Reason: what + ": not found"}
 	}
@@ -58,12 +61,15 @@ func (k *KubeSource) Version(ctx context.Context) (string, error) {
 	cs, _ := unstructuredSlice(l.Items[0].Object, "spec", "template", "spec", "containers")
 	for _, c := range cs {
 		m, _ := c.(map[string]any)
+		if n, _ := m["name"].(string); n != "argocd-server" {
+			continue // a sidecar's image tag says nothing about the Argo CD version
+		}
 		img, _ := m["image"].(string)
 		if i := strings.LastIndex(img, ":"); i > 0 && !strings.Contains(img[i:], "/") && !strings.Contains(img, "@") {
 			return img[i+1:], nil
 		}
 	}
-	return "", &ErrUnavailable{Reason: "argocd-server image has no version tag (digest-pinned)"}
+	return "", &ErrUnavailable{Reason: "no argocd-server container with a version tag in the Deployment (digest-pinned or renamed)"}
 }
 
 func unstructuredSlice(obj map[string]any, path ...string) ([]any, bool) {
@@ -118,7 +124,21 @@ func (k *KubeSource) Tree(context.Context, string, string) (*model.ResourceTree,
 	return nil, &ErrUnavailable{Reason: "needs the Argo CD API (the resource tree is served by argocd-server, not stored in the Application)"}
 }
 
-// Events is not read in kubeconfig mode.
-func (k *KubeSource) Events(context.Context, string, string) ([]model.Event, error) {
-	return nil, &ErrUnavailable{Reason: "needs the Argo CD API"}
+// Events reads the Kubernetes events Argo CD records about the Application.
+func (k *KubeSource) Events(ctx context.Context, ns, name string) ([]model.Event, error) {
+	l, err := k.Dyn.Resource(gvrEvent).Namespace(ns).List(ctx, metav1.ListOptions{
+		FieldSelector: "involvedObject.kind=Application,involvedObject.name=" + name})
+	if err != nil {
+		return nil, kerr(err, "events")
+	}
+	var out []model.Event
+	for _, it := range l.Items {
+		var e model.Event
+		if err := decode(it.Object, &e); err != nil {
+			return nil, err
+		}
+		out = append(out, e)
+	}
+	sortEvents(out)
+	return out, nil
 }

@@ -110,11 +110,6 @@
   },
   "notes": [
     {
-      "code": "revision-mismatch",
-      "text": "the operation synced revision main, the latest comparison is against fb31b708",
-      "source": ".status.operationState.syncResult.revision vs .status.sync.revision"
-    },
-    {
       "code": "no-field-diff",
       "text": "field-level differences are not shown; run `argocd app diff ase-denym`",
       "source": "-"

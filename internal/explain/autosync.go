@@ -15,13 +15,23 @@ func isAutomatedEnabled(sp *model.SyncPolicy) bool {
 
 func boolv(p *bool) bool { return p != nil && *p }
 
-// normalize drops nulls and empty values so that two decoded sources compare
-// the way typed structs with omitempty fields do.
+// freeForm lists source fields whose content is user data: false, 0 and empty values inside them
+// are meaningful (helm valuesObject, kustomize patches) and must never be normalised away.
+var freeForm = map[string]bool{"valuesObject": true, "patches": true, "values": true, "parameters": true, "fileParameters": true, "env": true, "args": true}
+
+// normalize drops nulls and empty values of known typed fields so that two decoded sources compare
+// the way typed structs with omitempty fields do. Free-form subtrees are kept as they are.
 func normalize(v any) any {
 	switch t := v.(type) {
 	case map[string]any:
 		out := map[string]any{}
 		for k, x := range t {
+			if freeForm[k] {
+				if x != nil {
+					out[k] = x
+				}
+				continue
+			}
 			n := normalize(x)
 			if isEmpty(n) {
 				continue
@@ -176,7 +186,7 @@ func analyzeAutoSync(s *model.Snapshot, r *Report) {
 					".status.sync.revision vs .status.operationState.syncResult.revision")
 			}
 			if revEq && !srcEq {
-				v("revisions match but the Application source changed since the last sync: auto-sync would try again", ".spec.source vs .status.operationState.syncResult.source")
+				info0("revisions match but the Application source changed since the last sync: auto-sync would try a new sync", ".spec.source vs .status.operationState.syncResult.source")
 			}
 		}
 		if attempted {
