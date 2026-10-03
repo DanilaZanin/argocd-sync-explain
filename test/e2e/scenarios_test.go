@@ -724,8 +724,8 @@ spec:
 			t.Fatalf("unknowns must name the unreadable child and project: %+v", rep.Unknowns)
 		}
 		for _, u := range rep.Unknowns {
-			if strings.Contains(u.What, "child") && !strings.Contains(u.Reason, "permission denied") {
-				t.Fatalf("reason should say permission denied: %+v", u)
+			if strings.Contains(u.What, "child") && !strings.Contains(u.Reason, "denied or does not exist") {
+				t.Fatalf("reason should say denied or does not exist: %+v", u)
 			}
 		}
 		// An Application the token cannot read at all is an explicit unknown (exit 3), not a tool error.
