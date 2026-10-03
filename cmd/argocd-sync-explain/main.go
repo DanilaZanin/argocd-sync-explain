@@ -132,17 +132,14 @@ func run(args []string, stdout, stderr *os.File, env func(string) string) int {
 				return 1
 			}
 			defer stop()
-			conn = forwarded(conn, addr)
-			if conn.Token == "" {
-				conn.Token = env("ARGOCD_AUTH_TOKEN")
-			}
+			conn = forwarded(conn, addr, *token, env)
 		}
 		if conn.Server == "" {
 			fmt.Fprintln(stderr, "error: API mode needs --server (or ARGOCD_SERVER, or the argocd CLI config, or --port-forward)")
 			return 1
 		}
 		if conn.Token == "" {
-			fmt.Fprintln(stderr, "error: API mode needs a token (--auth-token, ARGOCD_AUTH_TOKEN, or the argocd CLI config)")
+			fmt.Fprintln(stderr, "error: API mode needs a token (--auth-token, ARGOCD_AUTH_TOKEN, or the argocd CLI config; with --port-forward only the first two)")
 			return 1
 		}
 		src = collect.NewAPIClient(conn.Server, conn.Token, conn.PlainText, conn.Insecure)
@@ -169,6 +166,13 @@ func run(args []string, stdout, stderr *os.File, env func(string) string) int {
 		if errors.As(err, &u) && u.Denied {
 			// Not a tool failure: the data is not visible to this identity, which is an explicit unknown.
 			fmt.Fprintln(stderr, "unknown:", msg)
+			if *output == "json" {
+				// Keep jq pipelines working: a document with the verdict and the reason.
+				rep := &explain.Report{Mode: "api", Verdict: explain.VerdictUnknown, ExitCode: 3, Summary: msg,
+					Unknowns: []explain.UnknownItem{{What: "application " + *namespace + "/" + pos[1], Reason: msg}}}
+				rep.Application.Name, rep.Application.Namespace = pos[1], *namespace
+				_ = render.JSON(stdout, rep)
+			}
 			return 3
 		}
 		fmt.Fprintln(stderr, "error:", msg)
@@ -190,8 +194,14 @@ func run(args []string, stdout, stderr *os.File, env func(string) string) int {
 // forwarded points the connection at the local end of a port-forward. TLS verification is skipped
 // (the certificate is for the service name, not 127.0.0.1); an explicit --plaintext, for an
 // argocd-server running with server.insecure, is kept.
-func forwarded(c collect.Conn, addr string) collect.Conn {
+func forwarded(c collect.Conn, addr, flagToken string, env func(string) string) collect.Conn {
 	c.Server = addr
 	c.Insecure = true
+	// The argocd CLI config describes some other server. Its token must never be sent to the
+	// argocd-server found through the kubeconfig: only an explicit token counts.
+	c.Token = flagToken
+	if c.Token == "" {
+		c.Token = env("ARGOCD_AUTH_TOKEN")
+	}
 	return c
 }

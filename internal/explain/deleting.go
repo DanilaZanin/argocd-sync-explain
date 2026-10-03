@@ -49,6 +49,25 @@ func analyzeDeleting(s *model.Snapshot, r *Report) {
 			Source: ".metadata.finalizers"})
 	}
 
+	// PreDelete / PostDelete hooks run before the Application goes away; a running one is what it waits for.
+	named := false
+	if st := a.Status.OperationState; st != nil && st.SyncResult != nil {
+		for _, x := range st.SyncResult.Resources {
+			if (x.HookType == "PreDelete" || x.HookType == "PostDelete") && x.HookPhase == model.PhaseRunning {
+				ref := refOfResult(x)
+				named = true
+				r.Blockers = append(r.Blockers, Blocker{Role: RoleWaitingOn, Type: "hook", Ref: ref, ID: ref.ID(), HookType: x.HookType,
+					HookPhase: x.HookPhase, SyncPhase: x.SyncPhase, Wave: "-", Message: x.Message,
+					Why:    x.HookType + " hook has not finished; the Application is not removed until it completes",
+					Source: ".status.operationState.syncResult.resources"})
+			}
+		}
+	}
+	for _, f := range a.Metadata.Finalizers {
+		if (strings.HasPrefix(f, "pre-delete-finalizer.argocd.argoproj.io") || strings.HasPrefix(f, "post-delete-finalizer.argocd.argoproj.io")) && !named {
+			r.unknown("delete hook", f+" is set, so a PreDelete/PostDelete hook is pending or running, but the Application does not record which Job it is")
+		}
+	}
 	if cascade {
 		_, liveWhy := s.Unavailable["live"]
 		for _, rs := range a.Status.Resources {

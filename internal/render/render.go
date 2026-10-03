@@ -167,7 +167,7 @@ func (p *printer) report(r *explain.Report, in string, top bool) {
 	for _, c := range r.Children {
 		p.f(in, "")
 		healthy := c.Report != nil && c.Report.Verdict == explain.VerdictHealthy && len(c.Report.Children) == 0 && len(c.Report.Unknowns) == 0
-		p.f(in, "Child Application %s: %s", c.Ref.Name, c.Relation)
+		p.f(in, "Child Application %s: %s", childName(c.Ref), c.Relation)
 		p.f(in, "  %s", c.Evidence)
 		if c.Report != nil && !healthy {
 			p.f(in, "  explained independently:")
@@ -236,4 +236,11 @@ func oneLine(s string) string {
 		s = s[:400] + "..."
 	}
 	return s
+}
+
+func childName(r explain.Ref) string {
+	if r.Namespace != "" {
+		return r.Namespace + "/" + r.Name
+	}
+	return r.Name
 }

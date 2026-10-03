@@ -83,7 +83,7 @@ func unavail(err error, what string) error {
 	if he, ok := err.(*HTTPError); ok {
 		switch he.Status {
 		case http.StatusForbidden:
-			return &ErrUnavailable{Reason: fmt.Sprintf("%s: permission denied (HTTP 403); the token's RBAC does not allow reading it", what), Denied: true}
+			return &ErrUnavailable{Reason: fmt.Sprintf("%s: denied or does not exist (Argo CD answers HTTP 403 for both: the token's RBAC or the allowed namespaces may refuse it, or the name may be wrong)", what), Denied: true}
 		case http.StatusUnauthorized:
 			return &ErrUnavailable{Reason: fmt.Sprintf("%s: authentication failed (HTTP 401); the token is missing, expired or invalid", what)}
 		case http.StatusNotFound:

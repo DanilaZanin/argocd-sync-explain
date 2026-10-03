@@ -487,8 +487,6 @@ func analyzeRunning(s *model.Snapshot, r *Report) {
 			r.Blockers = append(r.Blockers, b)
 		}
 	}
-	// Failed results can exist while the operation is still Running (SyncFail hooks run).
-	collectFailures(s, r)
 	if len(r.Blockers) == 0 {
 		r.unknown("what the operation waits on",
 			"operation is Running but no task with hookPhase=Running is recorded and the message does not name one (it may have just started or be in the dry-run)")
@@ -496,12 +494,18 @@ func analyzeRunning(s *model.Snapshot, r *Report) {
 	buildPosition(r, results)
 	buildPending(s, r, results)
 	opNotes(s, r)
+	// Failed results can exist while the operation is still Running (SyncFail hooks run). They are
+	// listed as failed, after the position was taken from the tasks that are really waiting.
+	collectFailures(s, r)
 }
 
 func buildPosition(r *Report, results []model.ResourceResult) {
 	phases := map[string]bool{}
 	waves := map[string]bool{}
 	for _, b := range r.Blockers {
+		if b.Role != RoleWaitingOn {
+			continue
+		}
 		if b.SyncPhase != "" {
 			phases[b.SyncPhase] = true
 		}

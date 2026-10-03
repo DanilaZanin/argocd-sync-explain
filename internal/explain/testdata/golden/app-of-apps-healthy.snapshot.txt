@@ -8,6 +8,6 @@ Operation: finished (phase=Succeeded, automated sync, started 2026-10-03T06:33:5
   message: successfully synced (all tasks run)
   retry: limit=0, duration=5s factor=2 maxDuration=3m0s (.status.operationState.operation.retry)
 
-Child Application ase-rbac-child: health-assessed
+Child Application argocd/ase-rbac-child: health-assessed
   Argo CD assesses this child's health (Healthy), so a parent sync with later waves waits for it to be Healthy
   child is healthy and synced

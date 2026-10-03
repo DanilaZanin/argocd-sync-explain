@@ -95,7 +95,7 @@ func pickVerdict(s *model.Snapshot, r *Report) {
 	case OpRunning:
 		switch {
 		case r.Verdict != "":
-		case len(r.Blockers) == 0:
+		case waitingCount(r) == 0:
 			set(VerdictUnknown, "The sync operation is running, but nothing it waits on is recorded and the message gives no recognised reason.")
 		default:
 			set(VerdictWaiting, waitingSummary(r))
@@ -195,13 +195,17 @@ func lastOpText(r *Report) string {
 }
 
 func waitingSummary(r *Report) string {
-	var parts []string
+	var parts, failed []string
 	for _, b := range r.Blockers {
+		if b.Role == RoleFailed {
+			failed = append(failed, b.Ref.Kind+"/"+b.Ref.Name)
+			continue
+		}
 		switch b.Type {
 		case "sync-window":
 			parts = append(parts, "a sync window denies the sync")
 		case "hook":
-			parts = append(parts, fmt.Sprintf("%s hook %s/%s", b.HookType, b.Ref.Kind, b.Ref.Name))
+			parts = append(parts, strings.TrimSpace(fmt.Sprintf("%s hook %s/%s", b.HookType, b.Ref.Kind, b.Ref.Name)))
 		case "prune-confirmation":
 			parts = append(parts, fmt.Sprintf("pruning confirmation for %s/%s", b.Ref.Kind, b.Ref.Name))
 		case "child-application":
@@ -213,7 +217,21 @@ func waitingSummary(r *Report) string {
 	if len(parts) == 0 {
 		return "The sync operation is running; what it waits on is not recorded (see unknowns)."
 	}
-	return "The sync operation is running and waits on: " + strings.Join(parts, ", ") + "."
+	msg := "The sync operation is running and waits on: " + strings.Join(parts, ", ") + "."
+	if len(failed) > 0 {
+		msg += " Already failed: " + strings.Join(failed, ", ") + "."
+	}
+	return msg
+}
+
+func waitingCount(r *Report) int {
+	n := 0
+	for _, b := range r.Blockers {
+		if b.Role == RoleWaitingOn {
+			n++
+		}
+	}
+	return n
 }
 
 func failedSummary(r *Report) string {

@@ -140,6 +140,13 @@ func TestScenarios(t *testing.T) {
 		if len(rep.Blockers) != 0 {
 			t.Fatalf("a healthy app has no blockers: %+v", rep.Blockers)
 		}
+		// Argo CD answers 403 for an application that does not exist; the text must not claim an RBAC cause.
+		cmd := exec.Command(env.Bin, "-o", "json", "--insecure", "app", "does-not-exist")
+		cmd.Env = append(os.Environ(), "ARGOCD_SERVER="+env.argoAdr, "ARGOCD_AUTH_TOKEN="+env.token)
+		out, err := cmd.Output()
+		if ee, ok := err.(*exec.ExitError); !ok || ee.ExitCode() != 3 || !strings.Contains(string(out), `"verdict": "unknown"`) || !strings.Contains(string(ee.Stderr), "denied or does not exist") {
+			t.Fatalf("missing application: want exit 3 with a JSON unknown and the 403 wording: %v %s", err, out)
+		}
 		// Same app through the tool's own --port-forward mode.
 		out := env.text(t, "app", o.Name, "--port-forward", "--context", env.Context)
 		if !strings.Contains(out, "VERDICT: HEALTHY") {
@@ -544,6 +551,31 @@ spec:
 		env.record(t, "deleting", "app", o.Name)
 	})
 
+	// Opus round 2: a failed apply and a SyncFail hook that is still running. The headline and the position
+	// come from the running hook only; the Deployment is listed as failed.
+	scenario(t, "syncfail-hook-running-after-failed-apply", false, func(t *testing.T) {
+		o := appOpts{Name: "ase-syncfail", Path: "syncfail", Namespace: "ase-syncfail"}
+		neg := strings.Replace(deployment("neg", 0, true, 0), "replicas: 1", "replicas: -1", 1)
+		env.start(t, o, map[string]string{"neg.yaml": neg, "onfail.yaml": job("onfail", "SyncFail", "sleep 3600", 0, "")}, true)
+		env.waitApp(t, o.Name, "operation waiting for the SyncFail hook", waitLong, func(a *model.Application) bool {
+			return opPhase(a) == "Running" && strings.Contains(opMsg(a), "completion of hook batch/Job/onfail")
+		})
+		rep, code, _ := env.explain(t, "app", o.Name)
+		expectVerdict(t, rep, code, explain.VerdictWaiting, 2)
+		b := mustBlocker(t, rep, explain.RoleWaitingOn, "hook", "Job", "onfail")
+		if b.HookType != "SyncFail" {
+			t.Fatalf("%+v", b)
+		}
+		mustBlocker(t, rep, explain.RoleFailed, "resource", "Deployment", "neg")
+		if strings.Contains(rep.Summary, "Deployment/neg,") || strings.Contains(rep.Summary, ", Deployment/neg") || !strings.Contains(rep.Summary, "Already failed: Deployment/neg") {
+			t.Fatalf("headline: %s", rep.Summary)
+		}
+		if rep.Position == nil || rep.Position.Phase != "SyncFail" {
+			t.Fatalf("position must be the running SyncFail task only: %+v", rep.Position)
+		}
+		env.record(t, "syncfail-running", "app", o.Name)
+	})
+
 	scenario(t, "comparison-error-invalid-manifest", false, func(t *testing.T) {
 		o := appOpts{Name: "ase-invalid", Path: "invalid", Namespace: "ase-invalid"}
 		env.start(t, o, map[string]string{"bad.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata: {name: [unterminated\n"}, true)
@@ -701,7 +733,7 @@ spec:
 		cmd.Env = append(os.Environ(), "ARGOCD_SERVER="+env.argoAdr, "ARGOCD_AUTH_TOKEN="+tok)
 		out, err := cmd.CombinedOutput()
 		ee, ok := err.(*exec.ExitError)
-		if !ok || ee.ExitCode() != 3 || !strings.Contains(string(out), "permission denied") {
+		if !ok || ee.ExitCode() != 3 || !strings.Contains(string(out), "denied or does not exist") {
 			t.Fatalf("unreadable root application: want exit 3, got %v: %s", err, out)
 		}
 		env.record(t, "rbac-limited", "app", parent)

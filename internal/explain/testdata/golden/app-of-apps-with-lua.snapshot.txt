@@ -30,7 +30,7 @@ Auto-sync (enabled=true):
 Notes:
   field-level differences are not shown; run `argocd app diff ase-lua-parent`  [-]
 
-Child Application ase-lua-child: parent-waits
+Child Application argocd/ase-lua-child: parent-waits
   the parent's running operation waits on this child Application (task hookPhase=Running) and its health is assessed: Progressing
   explained independently:
     | argocd/ase-lua-child  sync=Synced health=Progressing  project=default

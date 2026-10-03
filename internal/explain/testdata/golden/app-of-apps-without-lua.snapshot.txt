@@ -8,7 +8,7 @@ Operation: finished (phase=Succeeded, automated sync, started 2026-10-03T06:33:3
   message: successfully synced (all tasks run)
   retry: limit=0, duration=5s factor=2 maxDuration=3m0s (.status.operationState.operation.retry)
 
-Child Application ase-nolua-child: parent-does-not-wait
+Child Application argocd/ase-nolua-child: parent-does-not-wait
   no health is assessed for Application resources on this installation (no health check for argoproj.io/Application in argocd-cm), so the parent's sync does not wait for this child
   explained independently:
     | argocd/ase-nolua-child  sync=Synced health=Progressing  project=default

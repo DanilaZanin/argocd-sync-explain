@@ -825,3 +825,39 @@ func TestTimeZonesComeFromEmbeddedData(t *testing.T) {
 		t.Fatalf("an invalid zone name must be called out: %+v", r.Notes)
 	}
 }
+
+// Opus round 2, item 2: a failed apply next to a running SyncFail hook.
+func TestSyncFailHookRunningAfterFailedApply(t *testing.T) {
+	s := snap(t, "api", `{`+base+`,"status":{"sync":{"status":"OutOfSync","revision":"aaaaaaa"},"resources":[{"group":"apps","kind":"Deployment","name":"neg","namespace":"web","status":"OutOfSync"}],
+	 "operationState":{"phase":"Running","message":"waiting for completion of hook batch/Job/onfail","startedAt":"2026-10-03T11:59:00Z","operation":{"sync":{}},
+	 "syncResult":{"revision":"aaaaaaa","resources":[
+	  {"group":"apps","kind":"Deployment","namespace":"web","name":"neg","status":"SyncFailed","message":"invalid","hookPhase":"Failed","syncPhase":"Sync"},
+	  {"group":"batch","kind":"Job","namespace":"web","name":"onfail","hookType":"SyncFail","hookPhase":"Running","syncPhase":"SyncFail"}]}}}}`)
+	s.Project = proj()
+	r := Explain(s)
+	if strings.Contains(r.Summary, "waits on: SyncFail hook Job/onfail, Deployment") || !strings.Contains(r.Summary, "waits on: SyncFail hook Job/onfail.") || !strings.Contains(r.Summary, "Already failed: Deployment/neg") {
+		t.Fatalf("headline: %s", r.Summary)
+	}
+	if r.Position.Phase != "SyncFail" {
+		t.Fatalf("position must come from the running task only: %+v", r.Position)
+	}
+	if !hasBlocker(r, RoleFailed, "resource", "Deployment", "neg") {
+		t.Fatalf("%+v", r.Blockers)
+	}
+}
+
+func TestDeletingNamesARunningPreDeleteHook(t *testing.T) {
+	s := snap(t, "api", `{"metadata":{"name":"web","namespace":"argocd","deletionTimestamp":"2026-10-03T11:00:00Z","finalizers":["pre-delete-finalizer.argocd.argoproj.io"]},"spec":{"project":"default","destination":{"server":"s"}},
+	 "status":{"sync":{"status":"Synced"},"health":{"status":"Healthy"},"operationState":{"phase":"Running","startedAt":"2026-10-03T11:00:00Z","operation":{"sync":{}},
+	 "syncResult":{"revision":"a","resources":[{"group":"batch","kind":"Job","namespace":"web","name":"cleanup","hookType":"PreDelete","hookPhase":"Running","syncPhase":"PreDelete"}]}}}}`)
+	s.Tree = &model.ResourceTree{}
+	r := Explain(s)
+	if r.Verdict != VerdictDeleting || !hasBlocker(r, RoleWaitingOn, "hook", "Job", "cleanup") || !strings.Contains(r.Summary, "Job/cleanup") {
+		t.Fatalf("%s %+v", r.Summary, r.Blockers)
+	}
+	// A pending hook that the Application does not name is an explicit unknown.
+	s.App.Status.OperationState = nil
+	if r := Explain(s); !hasUnknownItem(r, "delete hook") {
+		t.Fatalf("%+v", r.Unknowns)
+	}
+}

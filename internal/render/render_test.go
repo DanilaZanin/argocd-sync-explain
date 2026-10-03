@@ -26,3 +26,13 @@ func TestHealthyChildWithUnknownsIsNotCollapsed(t *testing.T) {
 		t.Fatalf("a fully known healthy child is collapsed:\n%s", b.String())
 	}
 }
+
+func TestChildHeaderHasTheNamespace(t *testing.T) {
+	parent := &explain.Report{Verdict: explain.VerdictHealthy, Summary: "ok",
+		Children: []explain.ChildInfo{{Ref: explain.Ref{Kind: "Application", Namespace: "team-a", Name: "dup"}, Relation: explain.RelUnknown, Evidence: "e"}}}
+	var b bytes.Buffer
+	Text(&b, parent)
+	if !strings.Contains(b.String(), "Child Application team-a/dup") {
+		t.Fatal(b.String())
+	}
+}

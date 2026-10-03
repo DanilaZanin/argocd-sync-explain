@@ -63,7 +63,7 @@ func TestAPIClientMapsErrorsToUnavailable(t *testing.T) {
 		}
 		switch {
 		case strings.HasPrefix(r.URL.Path, "/api/v1/applications/denied"):
-			http.Error(w, `{"error":"permission denied"}`, http.StatusForbidden)
+			http.Error(w, `{"error":"denied or does not exist"}`, http.StatusForbidden)
 		case r.URL.Path == "/api/v1/applications/ok":
 			if r.URL.Query().Get("appNamespace") != "argocd" || r.Method != http.MethodGet {
 				t.Errorf("unexpected request %s %s", r.Method, r.URL)
@@ -80,8 +80,8 @@ func TestAPIClientMapsErrorsToUnavailable(t *testing.T) {
 		t.Fatalf("%+v %v", a, err)
 	}
 	_, err = c.Application(context.Background(), "argocd", "denied")
-	if err == nil || !strings.Contains(err.Error(), "permission denied") {
-		t.Fatalf("403 must become a permission denied reason: %v", err)
+	if err == nil || !strings.Contains(err.Error(), "denied or does not exist") {
+		t.Fatalf("403 must become a denied or does not exist reason: %v", err)
 	}
 	if _, err := c.Tree(context.Background(), "argocd", "missing"); err == nil || !strings.Contains(err.Error(), "not found") {
 		t.Fatalf("%v", err)
@@ -240,7 +240,7 @@ func TestStatusCodesAndSecretRedaction(t *testing.T) {
 		t.Fatalf("401 is authentication, not RBAC: %v", err)
 	}
 	_, err = c.Application(context.Background(), "argocd", "403")
-	if !errors.As(err, &u) || !u.Denied {
+	if !errors.As(err, &u) || !u.Denied || !strings.Contains(u.Reason, "denied or does not exist") {
 		t.Fatalf("403 is a denial: %v", err)
 	}
 	_, err = c.Application(context.Background(), "argocd", "boom")

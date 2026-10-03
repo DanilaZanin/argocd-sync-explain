@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -27,9 +28,34 @@ func runCLI(t *testing.T, env map[string]string, args ...string) (code int, out,
 const canary = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjYW5hcnkifQ.Y2FuYXJ5c2ln"
 
 func TestForwardedKeepsPlaintext(t *testing.T) {
-	c := forwarded(collect.Conn{PlainText: true, Token: "t"}, "127.0.0.1:1234")
-	if !c.PlainText || c.Server != "127.0.0.1:1234" || c.Token != "t" {
+	c := forwarded(collect.Conn{PlainText: true, Token: "from-config"}, "127.0.0.1:1234", "flag-token", func(string) string { return "" })
+	if !c.PlainText || c.Server != "127.0.0.1:1234" || c.Token != "flag-token" {
 		t.Fatalf("%+v", c)
+	}
+}
+
+func TestPortForwardNeverSendsTheConfigToken(t *testing.T) {
+	var sawAuth string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { sawAuth = r.Header.Get("Authorization") }))
+	defer srv.Close()
+	// ResolveConn took a token from the argocd config (another server's context).
+	c := forwarded(collect.Conn{Token: "CANARY-FROM-CONFIG-9999"}, strings.TrimPrefix(srv.URL, "http://"), "", func(string) string { return "" })
+	if c.Token != "" {
+		t.Fatalf("config token survived: %+v", c)
+	}
+	c.PlainText = true
+	_, _ = collect.NewAPIClient(c.Server, c.Token, c.PlainText, c.Insecure).Version(context.Background())
+	if strings.Contains(sawAuth, "CANARY") {
+		t.Fatalf("the listener saw %q", sawAuth)
+	}
+	c = forwarded(collect.Conn{Token: "CANARY-FROM-CONFIG-9999"}, "x", "", func(k string) string {
+		if k == "ARGOCD_AUTH_TOKEN" {
+			return "env-token"
+		}
+		return ""
+	})
+	if c.Token != "env-token" {
+		t.Fatalf("an explicit env token is used: %+v", c)
 	}
 }
 
@@ -57,8 +83,13 @@ func TestUnreadableApplicationIsExit3NotExit1(t *testing.T) {
 	}))
 	defer srv.Close()
 	code, _, errOut := runCLI(t, map[string]string{"ARGOCD_AUTH_TOKEN": "tok-123456"}, "app", "x", "--server", strings.TrimPrefix(srv.URL, "http://"), "--plaintext")
-	if code != 3 || !strings.Contains(errOut, "permission denied") {
+	if code != 3 || !strings.Contains(errOut, "denied or does not exist") {
 		t.Fatalf("exit %d: %s", code, errOut)
+	}
+	// -o json still yields a document for jq.
+	code, out, _ := runCLI(t, map[string]string{"ARGOCD_AUTH_TOKEN": "tok-123456"}, "app", "x", "--server", strings.TrimPrefix(srv.URL, "http://"), "--plaintext", "-o", "json")
+	if code != 3 || !strings.Contains(out, `"verdict": "unknown"`) || !strings.Contains(out, `"exitCode": 3`) {
+		t.Fatalf("exit %d: %s", code, out)
 	}
 	// 401 is an authentication problem: a tool error.
 	srv2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { http.Error(w, "no", http.StatusUnauthorized) }))
