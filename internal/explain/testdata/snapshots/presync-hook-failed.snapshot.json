@@ -1,0 +1,209 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:32:33.789323+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-hookfail",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-hookfail\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-hookfail\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"hookfail\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"limit\":0}}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "hookfail",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-hookfail"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "retry": {}
+   }
+  },
+  "status": {
+   "resources": [
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "ase-hookfail",
+     "name": "c",
+     "status": "OutOfSync",
+     "health": {
+      "status": "Missing"
+     }
+    },
+    {
+     "group": "batch",
+     "version": "v1",
+     "kind": "Job",
+     "namespace": "ase-hookfail",
+     "name": "bad",
+     "health": {
+      "status": "Degraded",
+      "message": "Job has reached the specified backoff limit"
+     },
+     "hook": true,
+     "requiresPruning": true
+    }
+   ],
+   "sync": {
+    "status": "OutOfSync",
+    "revision": "a3826e2f899ea29587e5e1ea703c742dedc4192f"
+   },
+   "health": {
+    "status": "Missing"
+   },
+   "conditions": [
+    {
+     "type": "SyncError",
+     "message": "Failed last sync attempt to [a3826e2f899ea29587e5e1ea703c742dedc4192f]: one or more synchronization tasks completed unsuccessfully",
+     "lastTransitionTime": "2026-10-03T06:32:32Z"
+    }
+   ],
+   "reconciledAt": "2026-10-03T06:32:32Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "a3826e2f899ea29587e5e1ea703c742dedc4192f"
+     },
+     "initiatedBy": {
+      "automated": true
+     },
+     "retry": {}
+    },
+    "phase": "Failed",
+    "message": "one or more synchronization tasks completed unsuccessfully",
+    "syncResult": {
+     "resources": [
+      {
+       "group": "batch",
+       "version": "v1",
+       "kind": "Job",
+       "namespace": "ase-hookfail",
+       "name": "bad",
+       "status": "Synced",
+       "message": "Job has reached the specified backoff limit",
+       "hookType": "PreSync",
+       "hookPhase": "Failed",
+       "syncPhase": "PreSync"
+      }
+     ],
+     "revision": "a3826e2f899ea29587e5e1ea703c742dedc4192f",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "hookfail",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T06:32:29Z",
+    "finishedAt": "2026-10-03T06:32:32Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "ase-hookfail",
+    "name": "c",
+    "health": {
+     "status": "Missing"
+    }
+   },
+   {
+    "version": "v1",
+    "kind": "Pod",
+    "namespace": "ase-hookfail",
+    "name": "bad-s8rhf",
+    "uid": "cfbb744b-b9dd-4405-8c76-0ec2d9ad2906",
+    "parentRefs": [
+     {
+      "group": "batch",
+      "version": "v1",
+      "kind": "Job",
+      "namespace": "ase-hookfail",
+      "name": "bad",
+      "uid": "58f7fa8d-52ec-4425-a2db-6841ce9364d4"
+     }
+    ],
+    "health": {
+     "status": "Degraded",
+     "message": "container \"main\" failed with exit code 1"
+    },
+    "info": [
+     {
+      "name": "Status Reason",
+      "value": "Error"
+     },
+     {
+      "name": "Node",
+      "value": "ase-v3-5-3-control-plane"
+     },
+     {
+      "name": "Containers",
+      "value": "0/1"
+     }
+    ]
+   },
+   {
+    "group": "batch",
+    "version": "v1",
+    "kind": "Job",
+    "namespace": "ase-hookfail",
+    "name": "bad",
+    "uid": "58f7fa8d-52ec-4425-a2db-6841ce9364d4",
+    "health": {
+     "status": "Degraded",
+     "message": "Job has reached the specified backoff limit"
+    }
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to 'a3826e2f899ea29587e5e1ea703c742dedc4192f'",
+   "lastTimestamp": "2026-10-03T06:32:29Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:32:29Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T06:32:29Z",
+   "count": 1
+  },
+  {
+   "type": "Warning",
+   "reason": "OperationCompleted",
+   "message": "Sync operation to a3826e2f899ea29587e5e1ea703c742dedc4192f failed: one or more synchronization tasks completed unsuccessfully",
+   "lastTimestamp": "2026-10-03T06:32:32Z",
+   "count": 1
+  }
+ ],
+ "Children": {},
+ "Unavailable": {}
+}

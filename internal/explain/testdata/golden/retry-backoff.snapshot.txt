@@ -1,0 +1,27 @@
+argocd/ase-backoff  sync=OutOfSync health=Missing  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: RETRYING
+  The last sync attempt failed; the operation is in retry backoff (attempt 1), next attempt not before 2026-10-03T08:33:23Z.
+
+Operation: retry-backoff (phase=Running, automated sync, started 2026-10-03T06:33:20Z, finished 2026-10-03T06:33:23Z, retryCount=1)
+  message: one or more synchronization tasks completed unsuccessfully. Retrying attempt #1 at 7:33AM.
+  retry: limit=5, duration=1h factor=2 maxDuration=2h (.status.operationState.operation.retry)
+  next attempt: not before 2026-10-03T08:33:23Z
+
+Blockers:
+  [failed] hook Job/bad (ns ase-backoff)
+      PreSync hook ended with phase Failed
+      syncPhase=PreSync hookType=PreSync hookPhase=Failed wave=unknown (hook waves are annotations on the manifest, not recorded in the Application)
+      message: Job has reached the specified backoff limit
+      source: .status.operationState.syncResult.resources
+
+OutOfSync resources:
+  ConfigMap/c (ns ase-backoff)  missing: yes (resource health is Missing)
+
+Auto-sync (enabled=true):
+  verified: automated sync is enabled (an `automated` block without `enabled` means enabled)  [.spec.syncPolicy.automated]
+  verified: the operation is in retry backoff: attempt 1 of 5, next attempt not before 2026-10-03T08:33:23Z (the earliest time; the controller retries on its next pass after it)  [.status.operationState (phase=Running, finishedAt set), .operation.retry]
+
+Notes:
+  field-level differences are not shown; run `argocd app diff ase-backoff`  [-]

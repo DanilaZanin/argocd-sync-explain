@@ -1,0 +1,30 @@
+argocd/ase-prune  sync=OutOfSync health=Healthy  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: WAITING
+  The sync operation is running and waits on: pruning confirmation for ConfigMap/gone.
+
+Operation: running (phase=Running, automated sync, started 2026-10-03T06:32:47Z)
+  message: waiting for pruning confirmation of /ConfigMap/gone
+  position (reconstructed): phase=unknown wave=unknown
+    basis: reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor; no results recorded yet
+
+Blockers:
+  [waiting-on] prune-confirmation ConfigMap/gone
+      the controller reports it waits for confirmation to prune this resource (Prune=confirm)
+      wave=unknown
+      message: waiting for pruning confirmation of /ConfigMap/gone
+      source: .status.operationState.message
+
+Pending (no result yet, 1): ConfigMap/keep  waves=[0]
+    resources without a result yet; prune tasks run in reverse wave order, PruneLast adds a final wave, and hooks are not listed with waves, so this is a reconstruction, not the controller's task list
+
+OutOfSync resources:
+  ConfigMap/gone (ns ase-prune) requires-pruning  missing: no (exists in the cluster, not in the desired state)
+
+Auto-sync (enabled=true):
+  verified: automated sync is enabled (an `automated` block without `enabled` means enabled)  [.spec.syncPolicy.automated]
+  verified: an operation is already in progress; auto-sync does not start another  [.operation / .status.operationState.phase]
+
+Notes:
+  field-level differences are not shown; run `argocd app diff ase-prune`  [-]

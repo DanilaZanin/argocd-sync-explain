@@ -1,0 +1,26 @@
+argocd/ase-nolua-parent  sync=Synced health=Healthy  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: HEALTHY
+  Synced and Healthy. Nothing is blocked.
+
+Operation: finished (phase=Succeeded, automated sync, started 2026-10-03T06:33:31Z, finished 2026-10-03T06:33:33Z)
+  message: successfully synced (all tasks run)
+  retry: limit=0, duration=5s factor=2 maxDuration=3m0s (.status.operationState.operation.retry)
+
+Child Application ase-nolua-child: parent-does-not-wait
+  no health is assessed for Application resources on this installation (no health check for argoproj.io/Application in argocd-cm), so the parent's sync does not wait for this child
+  explained independently:
+    | argocd/ase-nolua-child  sync=Synced health=Progressing  project=default
+    | 
+    | VERDICT: PROGRESSING
+    |   The last sync operation finished successfully; the rollout is still Progressing. That is not a blocked sync: the operation does not hold for the health of the last wave.
+    | 
+    | Operation: finished (phase=Succeeded, automated sync, started 2026-10-03T06:33:31Z, finished 2026-10-03T06:33:31Z)
+    |   message: successfully synced (all tasks run)
+    |   retry: limit=5, duration=5s factor=2 maxDuration=3m0s (.status.operationState.operation.retry)
+    | 
+    | Observations (context, not blockers):
+    |   under application health: Deployment/web (ns ase-nolua-child) health=Progressing: Waiting for rollout to finish: 0 of 1 updated replicas are available...
+    |   under Deployment/web: ReplicaSet/web-957bd8ddf (ns ase-nolua-child) health=Progressing: Waiting for rollout to finish: 0 out of 1 new replicas are available...
+    |   under Deployment/web: Pod/web-957bd8ddf-zfdjg (ns ase-nolua-child) health=Progressing Status Reason=Running Containers=0/1

@@ -1,0 +1,115 @@
+{
+  "application": {
+    "name": "ase-nons",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "OutOfSync",
+    "healthStatus": "Missing",
+    "comparedRevisions": [
+      "90c3de94a40c4ca2697cf43a8dd8ef630c1a3195"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git nons @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "failed",
+  "exitCode": 2,
+  "summary": "The last sync operation failed on ConfigMap/c: one or more objects failed to apply, reason: namespaces \"ase-does-not-exist\" not found",
+  "operation": {
+    "kind": "finished",
+    "phase": "Failed",
+    "message": "one or more objects failed to apply, reason: namespaces \"ase-does-not-exist\" not found",
+    "startedAt": "2026-10-03T06:33:28Z",
+    "finishedAt": "2026-10-03T06:33:29Z",
+    "initiator": "manual (e2e)",
+    "revisions": [
+      "90c3de94a40c4ca2697cf43a8dd8ef630c1a3195"
+    ],
+    "retryCount": 0,
+    "retry": {
+      "limit": 0,
+      "unlimited": false,
+      "backoff": "duration=5s factor=2 maxDuration=3m0s",
+      "source": ".status.operationState.operation.retry"
+    },
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.message"
+    ]
+  },
+  "blockers": [
+    {
+      "role": "failed",
+      "type": "resource",
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-does-not-exist",
+        "name": "c"
+      },
+      "id": "/ConfigMap/ase-does-not-exist/c",
+      "syncPhase": "Sync",
+      "hookPhase": "Failed",
+      "applyResult": "SyncFailed",
+      "wave": "0",
+      "message": "namespaces \"ase-does-not-exist\" not found",
+      "health": {
+        "status": "Missing",
+        "source": "resource tree node health"
+      },
+      "why": "applying (or waiting for the health of) this resource failed",
+      "source": ".status.operationState.syncResult.resources"
+    }
+  ],
+  "observations": [
+    {
+      "under": "application health",
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-does-not-exist",
+        "name": "c"
+      },
+      "health": {
+        "status": "Missing",
+        "source": "resource tree node health"
+      },
+      "source": "resource tree node health"
+    }
+  ],
+  "outOfSync": [
+    {
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-does-not-exist",
+        "name": "c"
+      },
+      "status": "OutOfSync",
+      "missing": "yes (resource health is Missing)",
+      "source": ".status.resources[]"
+    }
+  ],
+  "autoSync": {
+    "enabled": false,
+    "verified": [
+      {
+        "text": "automated sync is not configured: Argo CD does not start syncs for this Application by itself",
+        "blocks": true,
+        "source": ".spec.syncPolicy.automated (absent)"
+      }
+    ],
+    "possible": []
+  },
+  "notes": [
+    {
+      "code": "no-field-diff",
+      "text": "field-level differences are not shown; run `argocd app diff ase-nons`",
+      "source": "-"
+    }
+  ],
+  "events": [
+    {
+      "reason": "OperationCompleted",
+      "message": "Sync operation to 90c3de94a40c4ca2697cf43a8dd8ef630c1a3195 failed: one or more objects failed to apply, reason: namespaces \"ase-does-not-exist\" not found",
+      "count": 1
+    }
+  ]
+}

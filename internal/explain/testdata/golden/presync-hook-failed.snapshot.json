@@ -1,0 +1,124 @@
+{
+  "application": {
+    "name": "ase-hookfail",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "OutOfSync",
+    "healthStatus": "Missing",
+    "comparedRevisions": [
+      "a3826e2f899ea29587e5e1ea703c742dedc4192f"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git hookfail @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "failed",
+  "exitCode": 2,
+  "summary": "The last sync operation failed on Job/bad: one or more synchronization tasks completed unsuccessfully",
+  "operation": {
+    "kind": "finished",
+    "phase": "Failed",
+    "message": "one or more synchronization tasks completed unsuccessfully",
+    "startedAt": "2026-10-03T06:32:29Z",
+    "finishedAt": "2026-10-03T06:32:32Z",
+    "initiator": "automated sync",
+    "revisions": [
+      "a3826e2f899ea29587e5e1ea703c742dedc4192f"
+    ],
+    "retryCount": 0,
+    "retry": {
+      "limit": 0,
+      "unlimited": false,
+      "backoff": "duration=5s factor=2 maxDuration=3m0s",
+      "source": ".status.operationState.operation.retry"
+    },
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.message"
+    ]
+  },
+  "blockers": [
+    {
+      "role": "failed",
+      "type": "hook",
+      "ref": {
+        "group": "batch",
+        "kind": "Job",
+        "namespace": "ase-hookfail",
+        "name": "bad"
+      },
+      "id": "batch/Job/ase-hookfail/bad",
+      "syncPhase": "PreSync",
+      "hookType": "PreSync",
+      "hookPhase": "Failed",
+      "applyResult": "Synced",
+      "wave": "unknown (hook waves are annotations on the manifest, not recorded in the Application)",
+      "message": "Job has reached the specified backoff limit",
+      "why": "PreSync hook ended with phase Failed",
+      "source": ".status.operationState.syncResult.resources"
+    }
+  ],
+  "observations": [
+    {
+      "under": "application health",
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-hookfail",
+        "name": "c"
+      },
+      "health": {
+        "status": "Missing",
+        "source": "resource tree node health"
+      },
+      "source": "resource tree node health"
+    }
+  ],
+  "outOfSync": [
+    {
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-hookfail",
+        "name": "c"
+      },
+      "status": "OutOfSync",
+      "missing": "yes (resource health is Missing)",
+      "source": ".status.resources[]"
+    }
+  ],
+  "autoSync": {
+    "enabled": true,
+    "verified": [
+      {
+        "text": "automated sync is enabled (an `automated` block without `enabled` means enabled)",
+        "source": ".spec.syncPolicy.automated"
+      },
+      {
+        "text": "the last sync attempt to a3826e2f with the same revision and source failed and auto-sync does not retry it: one or more synchronization tasks completed unsuccessfully",
+        "blocks": true,
+        "source": ".status.operationState (phase, message, syncResult.revision, syncResult.source)"
+      }
+    ],
+    "possible": []
+  },
+  "conditions": [
+    {
+      "type": "SyncError",
+      "message": "Failed last sync attempt to [a3826e2f899ea29587e5e1ea703c742dedc4192f]: one or more synchronization tasks completed unsuccessfully",
+      "source": ".status.conditions"
+    }
+  ],
+  "notes": [
+    {
+      "code": "no-field-diff",
+      "text": "field-level differences are not shown; run `argocd app diff ase-hookfail`",
+      "source": "-"
+    }
+  ],
+  "events": [
+    {
+      "reason": "OperationCompleted",
+      "message": "Sync operation to a3826e2f899ea29587e5e1ea703c742dedc4192f failed: one or more synchronization tasks completed unsuccessfully",
+      "count": 1
+    }
+  ]
+}

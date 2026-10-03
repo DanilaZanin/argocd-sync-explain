@@ -354,6 +354,32 @@ spec:
 		env.record(t, "retry-backoff", "app", o.Name)
 	})
 
+	// Argo CD's own message announces the retry time computed with the old retryCount, while the
+	// controller resumes with the incremented one. The tool reports the later, enforced time as
+	// "not before"; this scenario observes the real controller to confirm that it does not retry earlier.
+	scenario(t, "retry-backoff-timing", false, func(t *testing.T) {
+		o := appOpts{Name: "ase-backofft", Path: "backofft", Namespace: "ase-backofft",
+			SyncPolicy: "  syncPolicy:\n    automated: {}\n    retry: {limit: 5, backoff: {duration: 20s, factor: 2, maxDuration: 10m}}\n"}
+		env.start(t, o, map[string]string{"hook.yaml": job("bad", "PreSync", "exit 1", 0, ""), "cm.yaml": configMap("c", 0, "")}, true)
+		a := env.waitApp(t, o.Name, "first failure in retry backoff", waitLong, func(a *model.Application) bool {
+			return a.Status.OperationState != nil && a.Status.OperationState.Phase == "Running" &&
+				a.Status.OperationState.FinishedAt != nil && a.Status.OperationState.RetryCount == 1
+		})
+		finished := a.Status.OperationState.FinishedAt.UTC()
+		rep, _, _ := env.explain(t, "app", o.Name)
+		want := finished.Add(40 * time.Second).Format(time.RFC3339)
+		if rep.Operation.Kind != explain.OpBackoff || rep.Operation.NextRetryNotBefore != want {
+			t.Fatalf("kind=%s next=%s want %s", rep.Operation.Kind, rep.Operation.NextRetryNotBefore, want)
+		}
+		env.waitApp(t, o.Name, "second attempt to start", 3*time.Minute, func(a *model.Application) bool {
+			st := a.Status.OperationState
+			return st != nil && (st.FinishedAt == nil || st.RetryCount > 1 || !st.FinishedAt.UTC().Equal(finished))
+		})
+		if elapsed := time.Since(finished); elapsed < 39*time.Second {
+			t.Fatalf("the controller retried %s after the failure, before the computed 40s (20s * 2^1)", elapsed)
+		}
+	})
+
 	scenario(t, "comparison-error-invalid-manifest", false, func(t *testing.T) {
 		o := appOpts{Name: "ase-invalid", Path: "invalid", Namespace: "ase-invalid"}
 		env.start(t, o, map[string]string{"bad.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata: {name: [unterminated\n"}, true)

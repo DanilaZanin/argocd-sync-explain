@@ -1,0 +1,130 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:33:30.488504+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-nons",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-nons\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-does-not-exist\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"nons\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"syncOptions\":[]}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "nons",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-does-not-exist"
+   }
+  },
+  "status": {
+   "resources": [
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "ase-does-not-exist",
+     "name": "c",
+     "status": "OutOfSync",
+     "health": {
+      "status": "Missing"
+     }
+    }
+   ],
+   "sync": {
+    "status": "OutOfSync",
+    "revision": "90c3de94a40c4ca2697cf43a8dd8ef630c1a3195"
+   },
+   "health": {
+    "status": "Missing"
+   },
+   "reconciledAt": "2026-10-03T06:33:29Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "main"
+     },
+     "initiatedBy": {
+      "username": "e2e"
+     },
+     "retry": {}
+    },
+    "phase": "Failed",
+    "message": "one or more objects failed to apply, reason: namespaces \"ase-does-not-exist\" not found",
+    "syncResult": {
+     "resources": [
+      {
+       "group": "",
+       "version": "v1",
+       "kind": "ConfigMap",
+       "namespace": "ase-does-not-exist",
+       "name": "c",
+       "status": "SyncFailed",
+       "message": "namespaces \"ase-does-not-exist\" not found",
+       "hookPhase": "Failed",
+       "syncPhase": "Sync"
+      }
+     ],
+     "revision": "90c3de94a40c4ca2697cf43a8dd8ef630c1a3195",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "nons",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T06:33:28Z",
+    "finishedAt": "2026-10-03T06:33:29Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "ase-does-not-exist",
+    "name": "c",
+    "health": {
+     "status": "Missing"
+    }
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:33:27Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T06:33:27Z",
+   "count": 1
+  },
+  {
+   "type": "Warning",
+   "reason": "OperationCompleted",
+   "message": "Sync operation to 90c3de94a40c4ca2697cf43a8dd8ef630c1a3195 failed: one or more objects failed to apply, reason: namespaces \"ase-does-not-exist\" not found",
+   "lastTimestamp": "2026-10-03T06:33:29Z",
+   "count": 1
+  }
+ ],
+ "Children": {},
+ "Unavailable": {}
+}

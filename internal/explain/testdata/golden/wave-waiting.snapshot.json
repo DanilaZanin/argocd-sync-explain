@@ -1,0 +1,147 @@
+{
+  "application": {
+    "name": "ase-wave",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "OutOfSync",
+    "healthStatus": "Progressing",
+    "comparedRevisions": [
+      "7dc9dcd2129de79343e4d58e854892f2cced1a56"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git wave @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "waiting",
+  "exitCode": 2,
+  "summary": "The sync operation is running and waits on: Deployment/web.",
+  "operation": {
+    "kind": "running",
+    "phase": "Running",
+    "message": "waiting for healthy state of apps/Deployment/web",
+    "startedAt": "2026-10-03T06:32:15Z",
+    "initiator": "automated sync",
+    "revisions": [
+      "7dc9dcd2129de79343e4d58e854892f2cced1a56"
+    ],
+    "retryCount": 0,
+    "retry": {
+      "limit": 0,
+      "unlimited": false,
+      "backoff": "duration=5s factor=2 maxDuration=3m0s",
+      "source": ".status.operationState.operation.retry"
+    },
+    "waitReason": "resource-health",
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.message",
+      ".status.operationState.syncResult.resources"
+    ]
+  },
+  "position": {
+    "phase": "Sync",
+    "wave": "0",
+    "basis": "reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor"
+  },
+  "blockers": [
+    {
+      "role": "waiting-on",
+      "type": "resource",
+      "ref": {
+        "group": "apps",
+        "kind": "Deployment",
+        "namespace": "ase-wave",
+        "name": "web"
+      },
+      "id": "apps/Deployment/ase-wave/web",
+      "syncPhase": "Sync",
+      "hookPhase": "Running",
+      "applyResult": "Synced",
+      "wave": "0",
+      "message": "deployment.apps/web created",
+      "health": {
+        "status": "Progressing",
+        "message": "Waiting for rollout to finish: 0 of 1 updated replicas are available...",
+        "source": "resource tree node health"
+      },
+      "why": "applied by the operation; Argo CD now waits for its health to become Healthy before starting later waves or phases",
+      "source": ".status.operationState.syncResult.resources"
+    }
+  ],
+  "pending": {
+    "count": 1,
+    "waves": [
+      1
+    ],
+    "resources": [
+      "ConfigMap/later"
+    ],
+    "basis": ".status.resources minus .status.operationState.syncResult.resources",
+    "caveat": "resources without a result yet; prune tasks run in reverse wave order, PruneLast adds a final wave, and hooks are not listed with waves, so this is a reconstruction, not the controller's task list"
+  },
+  "observations": [
+    {
+      "under": "Deployment/web",
+      "ref": {
+        "group": "apps",
+        "kind": "ReplicaSet",
+        "namespace": "ase-wave",
+        "name": "web-957bd8ddf"
+      },
+      "health": {
+        "status": "Progressing",
+        "message": "Waiting for rollout to finish: 0 out of 1 new replicas are available...",
+        "source": "resource tree node health"
+      },
+      "source": "resource tree node"
+    },
+    {
+      "under": "Deployment/web",
+      "ref": {
+        "kind": "Pod",
+        "namespace": "ase-wave",
+        "name": "web-957bd8ddf-7v2d6"
+      },
+      "health": {
+        "status": "Progressing",
+        "source": "resource tree node health"
+      },
+      "info": "Status Reason=Running Containers=0/1",
+      "source": "resource tree node"
+    }
+  ],
+  "outOfSync": [
+    {
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-wave",
+        "name": "later"
+      },
+      "status": "OutOfSync",
+      "missing": "yes (resource health is Missing)",
+      "source": ".status.resources[]"
+    }
+  ],
+  "autoSync": {
+    "enabled": true,
+    "verified": [
+      {
+        "text": "automated sync is enabled (an `automated` block without `enabled` means enabled)",
+        "source": ".spec.syncPolicy.automated"
+      },
+      {
+        "text": "an operation is already in progress; auto-sync does not start another",
+        "blocks": true,
+        "source": ".operation / .status.operationState.phase"
+      }
+    ],
+    "possible": []
+  },
+  "notes": [
+    {
+      "code": "no-field-diff",
+      "text": "field-level differences are not shown; run `argocd app diff ase-wave`",
+      "source": "-"
+    }
+  ]
+}

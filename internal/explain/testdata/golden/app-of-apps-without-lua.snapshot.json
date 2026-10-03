@@ -1,0 +1,143 @@
+{
+  "application": {
+    "name": "ase-nolua-parent",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "Synced",
+    "healthStatus": "Healthy",
+    "comparedRevisions": [
+      "d00799819cd8767ce21040ccab2c0a515c6c1811"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git nolua-parent @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "healthy",
+  "exitCode": 2,
+  "summary": "Synced and Healthy. Nothing is blocked.",
+  "operation": {
+    "kind": "finished",
+    "phase": "Succeeded",
+    "message": "successfully synced (all tasks run)",
+    "startedAt": "2026-10-03T06:33:31Z",
+    "finishedAt": "2026-10-03T06:33:33Z",
+    "initiator": "automated sync",
+    "revisions": [
+      "d00799819cd8767ce21040ccab2c0a515c6c1811"
+    ],
+    "retryCount": 0,
+    "retry": {
+      "limit": 0,
+      "unlimited": false,
+      "backoff": "duration=5s factor=2 maxDuration=3m0s",
+      "source": ".status.operationState.operation.retry"
+    },
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.message"
+    ]
+  },
+  "children": [
+    {
+      "ref": {
+        "group": "argoproj.io",
+        "kind": "Application",
+        "namespace": "argocd",
+        "name": "ase-nolua-child"
+      },
+      "relation": "parent-does-not-wait",
+      "evidence": "no health is assessed for Application resources on this installation (no health check for argoproj.io/Application in argocd-cm), so the parent's sync does not wait for this child",
+      "health": {
+        "status": "none-assessed",
+        "source": "resource tree node (no health assessed for this kind)"
+      },
+      "report": {
+        "application": {
+          "name": "ase-nolua-child",
+          "namespace": "argocd",
+          "project": "default",
+          "syncStatus": "Synced",
+          "healthStatus": "Progressing",
+          "comparedRevisions": [
+            "d00799819cd8767ce21040ccab2c0a515c6c1811"
+          ],
+          "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git nolua-child @ main"
+        },
+        "mode": "api",
+        "argoVersion": "v3.5.3",
+        "verdict": "progressing",
+        "exitCode": 2,
+        "summary": "The last sync operation finished successfully; the rollout is still Progressing. That is not a blocked sync: the operation does not hold for the health of the last wave.",
+        "operation": {
+          "kind": "finished",
+          "phase": "Succeeded",
+          "message": "successfully synced (all tasks run)",
+          "startedAt": "2026-10-03T06:33:31Z",
+          "finishedAt": "2026-10-03T06:33:31Z",
+          "initiator": "automated sync",
+          "revisions": [
+            "d00799819cd8767ce21040ccab2c0a515c6c1811"
+          ],
+          "retryCount": 0,
+          "retry": {
+            "limit": 5,
+            "unlimited": false,
+            "backoff": "duration=5s factor=2 maxDuration=3m0s",
+            "source": ".status.operationState.operation.retry"
+          },
+          "sources": [
+            ".status.operationState.phase",
+            ".status.operationState.message"
+          ]
+        },
+        "observations": [
+          {
+            "under": "application health",
+            "ref": {
+              "group": "apps",
+              "kind": "Deployment",
+              "namespace": "ase-nolua-child",
+              "name": "web"
+            },
+            "health": {
+              "status": "Progressing",
+              "message": "Waiting for rollout to finish: 0 of 1 updated replicas are available...",
+              "source": "resource tree node health"
+            },
+            "source": "resource tree node health"
+          },
+          {
+            "under": "Deployment/web",
+            "ref": {
+              "group": "apps",
+              "kind": "ReplicaSet",
+              "namespace": "ase-nolua-child",
+              "name": "web-957bd8ddf"
+            },
+            "health": {
+              "status": "Progressing",
+              "message": "Waiting for rollout to finish: 0 out of 1 new replicas are available...",
+              "source": "resource tree node health"
+            },
+            "source": "resource tree node"
+          },
+          {
+            "under": "Deployment/web",
+            "ref": {
+              "kind": "Pod",
+              "namespace": "ase-nolua-child",
+              "name": "web-957bd8ddf-zfdjg"
+            },
+            "health": {
+              "status": "Progressing",
+              "source": "resource tree node health"
+            },
+            "info": "Status Reason=Running Containers=0/1",
+            "source": "resource tree node"
+          }
+        ]
+      },
+      "source": ".status.resources[] + resource tree"
+    }
+  ]
+}

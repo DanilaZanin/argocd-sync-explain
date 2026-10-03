@@ -460,3 +460,30 @@ func TestUnhealthyObservationsWhenNotSyncing(t *testing.T) {
 		t.Fatal("no operation: nothing is blocked")
 	}
 }
+
+func TestAutoSyncHeldByWindowWithNoOperation(t *testing.T) {
+	// A finished manual operation must not make the window check assume a manual sync now.
+	s := snap(t, "api", `{`+`"metadata":{"name":"web","namespace":"argocd"},"spec":{"project":"default","destination":{"server":"s","namespace":"web"},"syncPolicy":{"automated":{}}},
+	 "status":{"sync":{"status":"OutOfSync","revision":"b"},"health":{"status":"Healthy"},"resources":[{"kind":"ConfigMap","name":"c","namespace":"web","status":"OutOfSync"}],
+	 "operationState":{"phase":"Succeeded","startedAt":"2026-10-03T10:00:00Z","finishedAt":"2026-10-03T10:00:05Z","operation":{"initiatedBy":{"username":"alice"},"sync":{}},"syncResult":{"revision":"a"}}}}`)
+	s.Project = proj(win("deny", "* * * * *", "1h", func(w *model.SyncWindow) { w.ManualSync = true }))
+	r := Explain(s)
+	if r.SyncWindows == nil || r.SyncWindows.CanSync || r.SyncWindows.Manual {
+		t.Fatalf("auto-sync must be evaluated as automated even though the last operation was manual: %+v", r.SyncWindows)
+	}
+	if !verified(r, "sync window blocks automated syncs") {
+		t.Fatalf("%+v", r.AutoSync)
+	}
+	if !strings.Contains(r.Summary, "sync window") {
+		t.Fatalf("headline should name the blocking finding: %s", r.Summary)
+	}
+}
+
+func TestQueuedManualOperationUsesItsInitiatorForWindows(t *testing.T) {
+	s := snap(t, "api", `{`+base+`,"operation":{"initiatedBy":{"username":"alice"},"sync":{}},"status":{"sync":{"status":"OutOfSync"}}}`)
+	s.Project = proj(win("deny", "* * * * *", "1h", func(w *model.SyncWindow) { w.ManualSync = true }))
+	r := Explain(s)
+	if r.SyncWindows == nil || !r.SyncWindows.CanSync || !r.SyncWindows.Manual {
+		t.Fatalf("manualSync deny window lets a queued manual operation through: %+v", r.SyncWindows)
+	}
+}

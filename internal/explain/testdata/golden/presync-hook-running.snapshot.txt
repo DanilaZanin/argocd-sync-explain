@@ -1,0 +1,34 @@
+argocd/ase-hookrun  sync=OutOfSync health=Missing  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: WAITING
+  The sync operation is running and waits on: PreSync hook Job/slow.
+
+Operation: running (phase=Running, automated sync, started 2026-10-03T06:32:25Z)
+  message: waiting for completion of hook batch/Job/slow
+  position (reconstructed): phase=PreSync wave=unknown
+    basis: reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor
+
+Blockers:
+  [waiting-on] hook Job/slow (ns ase-hookrun)
+      PreSync hook has not finished; the operation does not start later tasks until it completes
+      syncPhase=PreSync hookType=PreSync hookPhase=Running wave=unknown (hook waves are annotations on the manifest, not recorded in the Application)
+      health: Progressing  [resource tree node health]
+      message: job.batch/slow created
+      source: .status.operationState.syncResult.resources
+
+Pending (no result yet, 1): ConfigMap/c  waves=[0]
+    resources without a result yet; prune tasks run in reverse wave order, PruneLast adds a final wave, and hooks are not listed with waves, so this is a reconstruction, not the controller's task list
+
+Observations (context, not blockers):
+  under Job/slow: Pod/slow-8zv9b (ns ase-hookrun) health=Progressing Status Reason=Running Containers=1/1
+
+OutOfSync resources:
+  ConfigMap/c (ns ase-hookrun)  missing: yes (resource health is Missing)
+
+Auto-sync (enabled=true):
+  verified: automated sync is enabled (an `automated` block without `enabled` means enabled)  [.spec.syncPolicy.automated]
+  verified: an operation is already in progress; auto-sync does not start another  [.operation / .status.operationState.phase]
+
+Notes:
+  field-level differences are not shown; run `argocd app diff ase-hookrun`  [-]

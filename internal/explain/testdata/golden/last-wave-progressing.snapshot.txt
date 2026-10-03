@@ -1,0 +1,14 @@
+argocd/ase-lastwave  sync=Synced health=Progressing  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: PROGRESSING
+  The last sync operation finished successfully; the rollout is still Progressing. That is not a blocked sync: the operation does not hold for the health of the last wave.
+
+Operation: finished (phase=Succeeded, automated sync, started 2026-10-03T06:32:23Z, finished 2026-10-03T06:32:23Z)
+  message: successfully synced (all tasks run)
+  retry: limit=0, duration=5s factor=2 maxDuration=3m0s (.status.operationState.operation.retry)
+
+Observations (context, not blockers):
+  under application health: Deployment/web (ns ase-lastwave) health=Progressing: Waiting for rollout to finish: 0 of 1 updated replicas are available...
+  under Deployment/web: ReplicaSet/web-957bd8ddf (ns ase-lastwave) health=Progressing: Waiting for rollout to finish: 0 out of 1 new replicas are available...
+  under Deployment/web: Pod/web-957bd8ddf-p68v7 (ns ase-lastwave) health=Progressing Status Reason=Running Containers=0/1

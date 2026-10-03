@@ -1,0 +1,13 @@
+argocd/ase-rbac-parent  sync=Synced health=Healthy  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: HEALTHY
+  Synced and Healthy. Nothing is blocked.
+
+Operation: finished (phase=Succeeded, automated sync, started 2026-10-03T06:33:58Z, finished 2026-10-03T06:33:58Z)
+  message: successfully synced (all tasks run)
+  retry: limit=0, duration=5s factor=2 maxDuration=3m0s (.status.operationState.operation.retry)
+
+Child Application ase-rbac-child: health-assessed
+  Argo CD assesses this child's health (Healthy), so a parent sync with later waves waits for it to be Healthy
+  child is healthy and synced

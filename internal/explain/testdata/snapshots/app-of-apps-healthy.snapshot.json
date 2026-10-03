@@ -1,0 +1,276 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:33:59.7581+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-rbac-parent",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-rbac-parent\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"argocd\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"rbac-parent\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"limit\":0}}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "rbac-parent",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "argocd"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "retry": {}
+   }
+  },
+  "status": {
+   "resources": [
+    {
+     "group": "argoproj.io",
+     "version": "v1alpha1",
+     "kind": "Application",
+     "namespace": "argocd",
+     "name": "ase-rbac-child",
+     "status": "Synced",
+     "health": {
+      "status": "Healthy"
+     }
+    }
+   ],
+   "sync": {
+    "status": "Synced",
+    "revision": "aa6a3f3e121e666d498b10e6b8177da30f2ce0e7"
+   },
+   "health": {
+    "status": "Healthy"
+   },
+   "reconciledAt": "2026-10-03T06:33:58Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "aa6a3f3e121e666d498b10e6b8177da30f2ce0e7"
+     },
+     "initiatedBy": {
+      "automated": true
+     },
+     "retry": {}
+    },
+    "phase": "Succeeded",
+    "message": "successfully synced (all tasks run)",
+    "syncResult": {
+     "resources": [
+      {
+       "group": "argoproj.io",
+       "version": "v1alpha1",
+       "kind": "Application",
+       "namespace": "argocd",
+       "name": "ase-rbac-child",
+       "status": "Synced",
+       "message": "application.argoproj.io/ase-rbac-child created",
+       "hookPhase": "Running",
+       "syncPhase": "Sync"
+      }
+     ],
+     "revision": "aa6a3f3e121e666d498b10e6b8177da30f2ce0e7",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "rbac-parent",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T06:33:58Z",
+    "finishedAt": "2026-10-03T06:33:58Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "group": "argoproj.io",
+    "version": "v1alpha1",
+    "kind": "Application",
+    "namespace": "argocd",
+    "name": "ase-rbac-child",
+    "uid": "4ed2e14f-cd27-4d4f-84d5-0dc35552e880",
+    "health": {
+     "status": "Healthy"
+    }
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to 'aa6a3f3e121e666d498b10e6b8177da30f2ce0e7'",
+   "lastTimestamp": "2026-10-03T06:33:58Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:33:58Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T06:33:58Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "OperationCompleted",
+   "message": "Sync operation to aa6a3f3e121e666d498b10e6b8177da30f2ce0e7 succeeded",
+   "lastTimestamp": "2026-10-03T06:33:58Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status: OutOfSync -\u003e Synced",
+   "lastTimestamp": "2026-10-03T06:33:58Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status: Missing -\u003e Progressing",
+   "lastTimestamp": "2026-10-03T06:33:58Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status: Progressing -\u003e Healthy",
+   "lastTimestamp": "2026-10-03T06:33:58Z",
+   "count": 1
+  }
+ ],
+ "Children": {
+  "argocd/ase-rbac-child": {
+   "Mode": "api",
+   "Now": "2026-10-03T09:33:59.7581+03:00",
+   "ArgoVersion": "v3.5.3",
+   "App": {
+    "metadata": {
+     "name": "ase-rbac-child",
+     "namespace": "argocd",
+     "annotations": {
+      "argocd.argoproj.io/sync-wave": "0",
+      "argocd.argoproj.io/tracking-id": "ase-rbac-parent:argoproj.io/Application:argocd/ase-rbac-child",
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{\"argocd.argoproj.io/sync-wave\":\"0\",\"argocd.argoproj.io/tracking-id\":\"ase-rbac-parent:argoproj.io/Application:argocd/ase-rbac-child\"},\"name\":\"ase-rbac-child\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-rbac-child\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"rbac-child\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{}}}}\n"
+     }
+    },
+    "spec": {
+     "project": "default",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "rbac-child",
+      "targetRevision": "main"
+     },
+     "destination": {
+      "server": "https://kubernetes.default.svc",
+      "namespace": "ase-rbac-child"
+     },
+     "syncPolicy": {
+      "automated": {}
+     }
+    },
+    "status": {
+     "resources": [
+      {
+       "version": "v1",
+       "kind": "ConfigMap",
+       "namespace": "ase-rbac-child",
+       "name": "c",
+       "status": "Synced"
+      }
+     ],
+     "sync": {
+      "status": "Synced",
+      "revision": "aa6a3f3e121e666d498b10e6b8177da30f2ce0e7"
+     },
+     "health": {
+      "status": "Healthy"
+     },
+     "reconciledAt": "2026-10-03T06:33:58Z",
+     "operationState": {
+      "operation": {
+       "sync": {
+        "revision": "aa6a3f3e121e666d498b10e6b8177da30f2ce0e7"
+       },
+       "initiatedBy": {
+        "automated": true
+       },
+       "retry": {
+        "limit": 5
+       }
+      },
+      "phase": "Succeeded",
+      "message": "successfully synced (all tasks run)",
+      "syncResult": {
+       "resources": [
+        {
+         "group": "",
+         "version": "v1",
+         "kind": "ConfigMap",
+         "namespace": "ase-rbac-child",
+         "name": "c",
+         "status": "Synced",
+         "message": "configmap/c created",
+         "hookPhase": "Running",
+         "syncPhase": "Sync"
+        }
+       ],
+       "revision": "aa6a3f3e121e666d498b10e6b8177da30f2ce0e7",
+       "source": {
+        "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+        "path": "rbac-child",
+        "targetRevision": "main"
+       }
+      },
+      "startedAt": "2026-10-03T06:33:58Z",
+      "finishedAt": "2026-10-03T06:33:58Z"
+     },
+     "resourceHealthSource": "appTree"
+    }
+   },
+   "Project": {
+    "metadata": {
+     "name": "default",
+     "namespace": "argocd"
+    },
+    "spec": {}
+   },
+   "Tree": {
+    "nodes": [
+     {
+      "version": "v1",
+      "kind": "ConfigMap",
+      "namespace": "ase-rbac-child",
+      "name": "c",
+      "uid": "92e4d961-acae-4420-a86a-6ff804869406"
+     }
+    ]
+   },
+   "Events": null,
+   "Children": {},
+   "Unavailable": {}
+  }
+ },
+ "Unavailable": {}
+}

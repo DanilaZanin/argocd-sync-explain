@@ -1,0 +1,97 @@
+{
+  "application": {
+    "name": "ase-rbac-parent",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "Synced",
+    "healthStatus": "Healthy",
+    "comparedRevisions": [
+      "aa6a3f3e121e666d498b10e6b8177da30f2ce0e7"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git rbac-parent @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "healthy",
+  "exitCode": 0,
+  "summary": "Synced and Healthy. Nothing is blocked.",
+  "operation": {
+    "kind": "finished",
+    "phase": "Succeeded",
+    "message": "successfully synced (all tasks run)",
+    "startedAt": "2026-10-03T06:33:58Z",
+    "finishedAt": "2026-10-03T06:33:58Z",
+    "initiator": "automated sync",
+    "revisions": [
+      "aa6a3f3e121e666d498b10e6b8177da30f2ce0e7"
+    ],
+    "retryCount": 0,
+    "retry": {
+      "limit": 0,
+      "unlimited": false,
+      "backoff": "duration=5s factor=2 maxDuration=3m0s",
+      "source": ".status.operationState.operation.retry"
+    },
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.message"
+    ]
+  },
+  "children": [
+    {
+      "ref": {
+        "group": "argoproj.io",
+        "kind": "Application",
+        "namespace": "argocd",
+        "name": "ase-rbac-child"
+      },
+      "relation": "health-assessed",
+      "evidence": "Argo CD assesses this child's health (Healthy), so a parent sync with later waves waits for it to be Healthy",
+      "health": {
+        "status": "Healthy",
+        "source": "resource tree node health"
+      },
+      "report": {
+        "application": {
+          "name": "ase-rbac-child",
+          "namespace": "argocd",
+          "project": "default",
+          "syncStatus": "Synced",
+          "healthStatus": "Healthy",
+          "comparedRevisions": [
+            "aa6a3f3e121e666d498b10e6b8177da30f2ce0e7"
+          ],
+          "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git rbac-child @ main"
+        },
+        "mode": "api",
+        "argoVersion": "v3.5.3",
+        "verdict": "healthy",
+        "exitCode": 0,
+        "summary": "Synced and Healthy. Nothing is blocked.",
+        "operation": {
+          "kind": "finished",
+          "phase": "Succeeded",
+          "message": "successfully synced (all tasks run)",
+          "startedAt": "2026-10-03T06:33:58Z",
+          "finishedAt": "2026-10-03T06:33:58Z",
+          "initiator": "automated sync",
+          "revisions": [
+            "aa6a3f3e121e666d498b10e6b8177da30f2ce0e7"
+          ],
+          "retryCount": 0,
+          "retry": {
+            "limit": 5,
+            "unlimited": false,
+            "backoff": "duration=5s factor=2 maxDuration=3m0s",
+            "source": ".status.operationState.operation.retry"
+          },
+          "sources": [
+            ".status.operationState.phase",
+            ".status.operationState.message"
+          ]
+        }
+      },
+      "source": ".status.resources[] + resource tree"
+    }
+  ]
+}

@@ -1,0 +1,236 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:32:24.944389+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-lastwave",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-lastwave\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-lastwave\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"lastwave\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"limit\":0}}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "lastwave",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-lastwave"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "retry": {}
+   }
+  },
+  "status": {
+   "resources": [
+    {
+     "group": "apps",
+     "version": "v1",
+     "kind": "Deployment",
+     "namespace": "ase-lastwave",
+     "name": "web",
+     "status": "Synced",
+     "health": {
+      "status": "Progressing",
+      "message": "Waiting for rollout to finish: 0 of 1 updated replicas are available..."
+     }
+    }
+   ],
+   "sync": {
+    "status": "Synced",
+    "revision": "bc9ea4a562654cecd978728324969a9d4e219264"
+   },
+   "health": {
+    "status": "Progressing"
+   },
+   "reconciledAt": "2026-10-03T06:32:23Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "bc9ea4a562654cecd978728324969a9d4e219264"
+     },
+     "initiatedBy": {
+      "automated": true
+     },
+     "retry": {}
+    },
+    "phase": "Succeeded",
+    "message": "successfully synced (all tasks run)",
+    "syncResult": {
+     "resources": [
+      {
+       "group": "apps",
+       "version": "v1",
+       "kind": "Deployment",
+       "namespace": "ase-lastwave",
+       "name": "web",
+       "status": "Synced",
+       "message": "deployment.apps/web created",
+       "hookPhase": "Running",
+       "syncPhase": "Sync"
+      }
+     ],
+     "revision": "bc9ea4a562654cecd978728324969a9d4e219264",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "lastwave",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T06:32:23Z",
+    "finishedAt": "2026-10-03T06:32:23Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "Pod",
+    "namespace": "ase-lastwave",
+    "name": "web-957bd8ddf-p68v7",
+    "uid": "06e18b7c-fcf2-4003-b748-cf9ce5378d25",
+    "parentRefs": [
+     {
+      "group": "apps",
+      "version": "v1",
+      "kind": "ReplicaSet",
+      "namespace": "ase-lastwave",
+      "name": "web-957bd8ddf",
+      "uid": "91e88578-8739-403b-ad16-75cd375a60c1"
+     }
+    ],
+    "health": {
+     "status": "Progressing"
+    },
+    "info": [
+     {
+      "name": "Status Reason",
+      "value": "Running"
+     },
+     {
+      "name": "Node",
+      "value": "ase-v3-5-3-control-plane"
+     },
+     {
+      "name": "Containers",
+      "value": "0/1"
+     },
+     {
+      "name": "cpu",
+      "value": "0"
+     },
+     {
+      "name": "memory",
+      "value": "0"
+     }
+    ]
+   },
+   {
+    "group": "apps",
+    "version": "v1",
+    "kind": "Deployment",
+    "namespace": "ase-lastwave",
+    "name": "web",
+    "uid": "0ab7cfd8-7261-4a08-9356-c88ab197eae2",
+    "health": {
+     "status": "Progressing",
+     "message": "Waiting for rollout to finish: 0 of 1 updated replicas are available..."
+    },
+    "info": [
+     {
+      "name": "Revision",
+      "value": "Rev:1"
+     }
+    ]
+   },
+   {
+    "group": "apps",
+    "version": "v1",
+    "kind": "ReplicaSet",
+    "namespace": "ase-lastwave",
+    "name": "web-957bd8ddf",
+    "uid": "91e88578-8739-403b-ad16-75cd375a60c1",
+    "parentRefs": [
+     {
+      "group": "apps",
+      "version": "v1",
+      "kind": "Deployment",
+      "namespace": "ase-lastwave",
+      "name": "web",
+      "uid": "0ab7cfd8-7261-4a08-9356-c88ab197eae2"
+     }
+    ],
+    "health": {
+     "status": "Progressing",
+     "message": "Waiting for rollout to finish: 0 out of 1 new replicas are available..."
+    },
+    "info": [
+     {
+      "name": "Revision",
+      "value": "Rev:1"
+     }
+    ]
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to 'bc9ea4a562654cecd978728324969a9d4e219264'",
+   "lastTimestamp": "2026-10-03T06:32:23Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:32:23Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T06:32:23Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "OperationCompleted",
+   "message": "Sync operation to bc9ea4a562654cecd978728324969a9d4e219264 succeeded",
+   "lastTimestamp": "2026-10-03T06:32:23Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status: OutOfSync -\u003e Synced",
+   "lastTimestamp": "2026-10-03T06:32:23Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status: Missing -\u003e Progressing",
+   "lastTimestamp": "2026-10-03T06:32:23Z",
+   "count": 1
+  }
+ ],
+ "Children": {},
+ "Unavailable": {}
+}

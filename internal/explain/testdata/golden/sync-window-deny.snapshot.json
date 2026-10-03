@@ -1,0 +1,83 @@
+{
+  "application": {
+    "name": "ase-deny",
+    "namespace": "argocd",
+    "project": "ase-deny",
+    "syncStatus": "OutOfSync",
+    "healthStatus": "Missing",
+    "comparedRevisions": [
+      "4339431f063c678105d13a95d91075fdde47ec5d"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git deny @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "out-of-sync",
+  "exitCode": 2,
+  "summary": "OutOfSync: 1 resource(s) differ from the desired state. Auto-sync: a sync window blocks automated syncs now (a deny window is active): the controller does not start an auto-sync while the windows deny it, and records nothing in the Application.",
+  "operation": {
+    "kind": "none",
+    "retryCount": 0,
+    "sources": []
+  },
+  "observations": [
+    {
+      "under": "application health",
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-deny",
+        "name": "c"
+      },
+      "health": {
+        "status": "Missing",
+        "source": "resource tree node health"
+      },
+      "source": "resource tree node health"
+    }
+  ],
+  "outOfSync": [
+    {
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-deny",
+        "name": "c"
+      },
+      "status": "OutOfSync",
+      "missing": "yes (resource health is Missing)",
+      "source": ".status.resources[]"
+    }
+  ],
+  "autoSync": {
+    "enabled": true,
+    "verified": [
+      {
+        "text": "automated sync is enabled (an `automated` block without `enabled` means enabled)",
+        "source": ".spec.syncPolicy.automated"
+      },
+      {
+        "text": "a sync window blocks automated syncs now (a deny window is active): the controller does not start an auto-sync while the windows deny it, and records nothing in the Application",
+        "blocks": true,
+        "source": "AppProject .spec.syncWindows evaluated for an automated sync"
+      }
+    ],
+    "possible": []
+  },
+  "syncWindows": {
+    "evaluated": true,
+    "canSync": false,
+    "reason": "a deny window is active",
+    "rules": "Argo CD 3.5 rules (syncOverrun supported)",
+    "matching": [
+      "deny schedule=\"* * * * *\" duration=1h tz=UTC manualSync=false"
+    ],
+    "assumedManual": false,
+    "source": "AppProject ase-deny .spec.syncWindows evaluated at 2026-10-03T06:33:00Z"
+  },
+  "notes": [
+    {
+      "code": "no-field-diff",
+      "text": "field-level differences are not shown; run `argocd app diff ase-deny`",
+      "source": "-"
+    }
+  ]
+}

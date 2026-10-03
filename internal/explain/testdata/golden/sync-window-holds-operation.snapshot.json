@@ -1,0 +1,123 @@
+{
+  "application": {
+    "name": "ase-denym",
+    "namespace": "argocd",
+    "project": "ase-denym",
+    "syncStatus": "OutOfSync",
+    "healthStatus": "Missing",
+    "comparedRevisions": [
+      "fb31b708edc656c7eeb281d071db90e5a5ee3662"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git denym @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "waiting",
+  "exitCode": 2,
+  "summary": "The sync operation is running and waits on: a sync window denies the sync.",
+  "operation": {
+    "kind": "running",
+    "phase": "Running",
+    "message": "Sync operation blocked by sync window",
+    "startedAt": "2026-10-03T06:33:14Z",
+    "initiator": "manual (e2e)",
+    "revisions": [
+      "main"
+    ],
+    "retryCount": 0,
+    "retry": {
+      "limit": 0,
+      "unlimited": false,
+      "backoff": "duration=5s factor=2 maxDuration=3m0s",
+      "source": ".status.operationState.operation.retry"
+    },
+    "waitReason": "sync-window",
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.message",
+      ".status.operationState.syncResult.resources"
+    ]
+  },
+  "position": {
+    "phase": "unknown",
+    "wave": "unknown",
+    "basis": "reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor; no results recorded yet"
+  },
+  "blockers": [
+    {
+      "role": "waiting-on",
+      "type": "sync-window",
+      "ref": {
+        "kind": "SyncWindow",
+        "name": "ase-denym"
+      },
+      "id": "sync-window",
+      "wave": "-",
+      "message": "Sync operation blocked by sync window",
+      "why": "the operation exists but the controller refuses to run it while sync windows deny it (details in syncWindows)",
+      "source": ".status.operationState.message"
+    }
+  ],
+  "pending": {
+    "count": 1,
+    "waves": [
+      0
+    ],
+    "resources": [
+      "ConfigMap/c"
+    ],
+    "basis": ".status.resources minus .status.operationState.syncResult.resources",
+    "caveat": "resources without a result yet; prune tasks run in reverse wave order, PruneLast adds a final wave, and hooks are not listed with waves, so this is a reconstruction, not the controller's task list"
+  },
+  "outOfSync": [
+    {
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-denym",
+        "name": "c"
+      },
+      "status": "OutOfSync",
+      "missing": "yes (resource health is Missing)",
+      "source": ".status.resources[]"
+    }
+  ],
+  "autoSync": {
+    "enabled": false,
+    "verified": [
+      {
+        "text": "automated sync is not configured: Argo CD does not start syncs for this Application by itself",
+        "blocks": true,
+        "source": ".spec.syncPolicy.automated (absent)"
+      },
+      {
+        "text": "an operation is already in progress; auto-sync does not start another",
+        "blocks": true,
+        "source": ".operation / .status.operationState.phase"
+      }
+    ],
+    "possible": []
+  },
+  "syncWindows": {
+    "evaluated": true,
+    "canSync": false,
+    "reason": "a deny window is active",
+    "rules": "Argo CD 3.5 rules (syncOverrun supported)",
+    "matching": [
+      "deny schedule=\"* * * * *\" duration=1h tz=UTC manualSync=false"
+    ],
+    "assumedManual": true,
+    "source": "AppProject ase-denym .spec.syncWindows evaluated at 2026-10-03T06:33:16Z"
+  },
+  "notes": [
+    {
+      "code": "revision-mismatch",
+      "text": "the operation synced revision main, the latest comparison is against fb31b708",
+      "source": ".status.operationState.syncResult.revision vs .status.sync.revision"
+    },
+    {
+      "code": "no-field-diff",
+      "text": "field-level differences are not shown; run `argocd app diff ase-denym`",
+      "source": "-"
+    }
+  ]
+}

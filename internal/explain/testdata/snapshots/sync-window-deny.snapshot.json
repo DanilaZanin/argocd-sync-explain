@@ -1,0 +1,105 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:33:00.897574+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-deny",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-deny\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-deny\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"ase-deny\",\"source\":{\"path\":\"deny\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"limit\":0}}}}\n"
+   }
+  },
+  "spec": {
+   "project": "ase-deny",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "deny",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-deny"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "retry": {}
+   }
+  },
+  "status": {
+   "resources": [
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "ase-deny",
+     "name": "c",
+     "status": "OutOfSync",
+     "health": {
+      "status": "Missing"
+     }
+    }
+   ],
+   "sync": {
+    "status": "OutOfSync",
+    "revision": "4339431f063c678105d13a95d91075fdde47ec5d"
+   },
+   "health": {
+    "status": "Missing"
+   },
+   "reconciledAt": "2026-10-03T06:32:49Z",
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "ase-deny",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"AppProject\",\"metadata\":{\"annotations\":{},\"name\":\"ase-deny\",\"namespace\":\"argocd\"},\"spec\":{\"clusterResourceWhitelist\":[{\"group\":\"*\",\"kind\":\"*\"}],\"destinations\":[{\"namespace\":\"*\",\"server\":\"*\"}],\"sourceRepos\":[\"*\"],\"syncWindows\":[{\"applications\":[\"*\"],\"duration\":\"1h\",\"kind\":\"deny\",\"schedule\":\"* * * * *\"}]}}\n"
+   }
+  },
+  "spec": {
+   "syncWindows": [
+    {
+     "kind": "deny",
+     "schedule": "* * * * *",
+     "duration": "1h",
+     "applications": [
+      "*"
+     ]
+    }
+   ]
+  }
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "ase-deny",
+    "name": "c",
+    "health": {
+     "status": "Missing"
+    }
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:32:49Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T06:32:49Z",
+   "count": 1
+  }
+ ],
+ "Children": {},
+ "Unavailable": {}
+}

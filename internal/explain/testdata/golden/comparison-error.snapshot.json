@@ -1,0 +1,45 @@
+{
+  "application": {
+    "name": "ase-invalid",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "Unknown",
+    "healthStatus": "Healthy",
+    "comparedRevisions": [
+      "main"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git invalid @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "error",
+  "exitCode": 2,
+  "summary": "Argo CD reports an error condition: ComparisonError: Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = FailedPrecondition desc = Failed to unmarshal \"bad.yaml\": failed to unmarshal manifest: error converting YAML to JSON: yaml: line 3: did not find expected ',' or ']'.",
+  "operation": {
+    "kind": "none",
+    "retryCount": 0,
+    "sources": []
+  },
+  "autoSync": {
+    "enabled": true,
+    "verified": [
+      {
+        "text": "automated sync is enabled (an `automated` block without `enabled` means enabled)",
+        "source": ".spec.syncPolicy.automated"
+      },
+      {
+        "text": "sync status is Unknown: auto-sync only acts on OutOfSync",
+        "blocks": true,
+        "source": ".status.sync.status"
+      }
+    ],
+    "possible": []
+  },
+  "conditions": [
+    {
+      "type": "ComparisonError",
+      "message": "Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = FailedPrecondition desc = Failed to unmarshal \"bad.yaml\": failed to unmarshal manifest: error converting YAML to JSON: yaml: line 3: did not find expected ',' or ']'",
+      "source": ".status.conditions"
+    }
+  ]
+}

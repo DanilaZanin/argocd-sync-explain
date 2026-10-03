@@ -1,0 +1,74 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:33:26.523769+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-invalid",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-invalid\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-invalid\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"invalid\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"limit\":0}}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "invalid",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-invalid"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "retry": {}
+   }
+  },
+  "status": {
+   "sync": {
+    "status": "Unknown",
+    "revision": "main"
+   },
+   "health": {
+    "status": "Healthy"
+   },
+   "conditions": [
+    {
+     "type": "ComparisonError",
+     "message": "Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = FailedPrecondition desc = Failed to unmarshal \"bad.yaml\": failed to unmarshal manifest: error converting YAML to JSON: yaml: line 3: did not find expected ',' or ']'",
+     "lastTransitionTime": "2026-10-03T06:33:24Z"
+    }
+   ],
+   "reconciledAt": "2026-10-03T06:33:24Z",
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {},
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e Unknown",
+   "lastTimestamp": "2026-10-03T06:33:24Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Healthy",
+   "lastTimestamp": "2026-10-03T06:33:24Z",
+   "count": 1
+  }
+ ],
+ "Children": {},
+ "Unavailable": {}
+}

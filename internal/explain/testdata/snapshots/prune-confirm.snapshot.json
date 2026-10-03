@@ -1,0 +1,179 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:32:49.316272+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-prune",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-prune\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-prune\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"prune\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{\"prune\":true},\"retry\":{\"limit\":0}}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "prune",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-prune"
+   },
+   "syncPolicy": {
+    "automated": {
+     "prune": true
+    },
+    "retry": {}
+   }
+  },
+  "operation": {
+   "sync": {
+    "revision": "af27f507f52c3bef24212f94f517a954b0c14729",
+    "prune": true
+   },
+   "initiatedBy": {
+    "automated": true
+   },
+   "retry": {}
+  },
+  "status": {
+   "resources": [
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "ase-prune",
+     "name": "gone",
+     "status": "OutOfSync",
+     "requiresPruning": true,
+     "requiresDeletionConfirmation": true
+    },
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "ase-prune",
+     "name": "keep",
+     "status": "Synced"
+    }
+   ],
+   "sync": {
+    "status": "OutOfSync",
+    "revision": "af27f507f52c3bef24212f94f517a954b0c14729"
+   },
+   "health": {
+    "status": "Healthy"
+   },
+   "reconciledAt": "2026-10-03T06:32:47Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "af27f507f52c3bef24212f94f517a954b0c14729",
+      "prune": true
+     },
+     "initiatedBy": {
+      "automated": true
+     },
+     "retry": {}
+    },
+    "phase": "Running",
+    "message": "waiting for pruning confirmation of /ConfigMap/gone",
+    "syncResult": {
+     "revision": "af27f507f52c3bef24212f94f517a954b0c14729",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "prune",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T06:32:47Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "ase-prune",
+    "name": "gone",
+    "uid": "49f4fb5f-0fe8-4a04-9e7f-c2cf8a196da7"
+   },
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "ase-prune",
+    "name": "keep",
+    "uid": "5f3aca4a-4d09-4406-b614-b35d864f13a9"
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to 'a1bf3ce3857db0dcb04d6b54e9566a67bfc9912f'",
+   "lastTimestamp": "2026-10-03T06:32:46Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:32:46Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T06:32:46Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "OperationCompleted",
+   "message": "Sync operation to a1bf3ce3857db0dcb04d6b54e9566a67bfc9912f succeeded",
+   "lastTimestamp": "2026-10-03T06:32:46Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status: OutOfSync -\u003e Synced",
+   "lastTimestamp": "2026-10-03T06:32:46Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status: Missing -\u003e Healthy",
+   "lastTimestamp": "2026-10-03T06:32:46Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to 'af27f507f52c3bef24212f94f517a954b0c14729'",
+   "lastTimestamp": "2026-10-03T06:32:47Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status: Synced -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:32:47Z",
+   "count": 1
+  }
+ ],
+ "Children": {},
+ "Unavailable": {}
+}

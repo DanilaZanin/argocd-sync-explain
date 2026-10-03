@@ -1,0 +1,383 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:33:44.033165+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-lua-parent",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-lua-parent\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"argocd\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"lua-parent\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"limit\":0}}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "lua-parent",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "argocd"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "retry": {}
+   }
+  },
+  "operation": {
+   "sync": {
+    "revision": "03735d295e9c36f5b707dd7a8a4e9787334c4390"
+   },
+   "initiatedBy": {
+    "automated": true
+   },
+   "retry": {}
+  },
+  "status": {
+   "resources": [
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "argocd",
+     "name": "after-lua",
+     "status": "OutOfSync",
+     "health": {
+      "status": "Missing"
+     },
+     "syncWave": 1
+    },
+    {
+     "group": "argoproj.io",
+     "version": "v1alpha1",
+     "kind": "Application",
+     "namespace": "argocd",
+     "name": "ase-lua-child",
+     "status": "Synced",
+     "health": {
+      "status": "Progressing"
+     }
+    }
+   ],
+   "sync": {
+    "status": "OutOfSync",
+    "revision": "03735d295e9c36f5b707dd7a8a4e9787334c4390"
+   },
+   "health": {
+    "status": "Progressing"
+   },
+   "reconciledAt": "2026-10-03T06:33:40Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "03735d295e9c36f5b707dd7a8a4e9787334c4390"
+     },
+     "initiatedBy": {
+      "automated": true
+     },
+     "retry": {}
+    },
+    "phase": "Running",
+    "message": "waiting for healthy state of argoproj.io/Application/ase-lua-child",
+    "syncResult": {
+     "resources": [
+      {
+       "group": "argoproj.io",
+       "version": "v1alpha1",
+       "kind": "Application",
+       "namespace": "argocd",
+       "name": "ase-lua-child",
+       "status": "Synced",
+       "message": "application.argoproj.io/ase-lua-child created",
+       "hookPhase": "Running",
+       "syncPhase": "Sync"
+      }
+     ],
+     "revision": "03735d295e9c36f5b707dd7a8a4e9787334c4390",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "lua-parent",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T06:33:40Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "argocd",
+    "name": "after-lua",
+    "health": {
+     "status": "Missing"
+    }
+   },
+   {
+    "group": "argoproj.io",
+    "version": "v1alpha1",
+    "kind": "Application",
+    "namespace": "argocd",
+    "name": "ase-lua-child",
+    "uid": "ed623bd0-3de1-4644-b401-ab1d5df4e09a",
+    "health": {
+     "status": "Progressing"
+    }
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to '03735d295e9c36f5b707dd7a8a4e9787334c4390'",
+   "lastTimestamp": "2026-10-03T06:33:40Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:33:40Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T06:33:40Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status: Missing -\u003e Progressing",
+   "lastTimestamp": "2026-10-03T06:33:40Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status: Progressing -\u003e Healthy",
+   "lastTimestamp": "2026-10-03T06:33:41Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status: Healthy -\u003e Progressing",
+   "lastTimestamp": "2026-10-03T06:33:41Z",
+   "count": 1
+  }
+ ],
+ "Children": {
+  "argocd/ase-lua-child": {
+   "Mode": "api",
+   "Now": "2026-10-03T09:33:44.033165+03:00",
+   "ArgoVersion": "v3.5.3",
+   "App": {
+    "metadata": {
+     "name": "ase-lua-child",
+     "namespace": "argocd",
+     "annotations": {
+      "argocd.argoproj.io/sync-wave": "0",
+      "argocd.argoproj.io/tracking-id": "ase-lua-parent:argoproj.io/Application:argocd/ase-lua-child",
+      "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{\"argocd.argoproj.io/sync-wave\":\"0\",\"argocd.argoproj.io/tracking-id\":\"ase-lua-parent:argoproj.io/Application:argocd/ase-lua-child\"},\"name\":\"ase-lua-child\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-lua-child\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"lua-child\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{}}}}\n"
+     }
+    },
+    "spec": {
+     "project": "default",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "lua-child",
+      "targetRevision": "main"
+     },
+     "destination": {
+      "server": "https://kubernetes.default.svc",
+      "namespace": "ase-lua-child"
+     },
+     "syncPolicy": {
+      "automated": {}
+     }
+    },
+    "status": {
+     "resources": [
+      {
+       "group": "apps",
+       "version": "v1",
+       "kind": "Deployment",
+       "namespace": "ase-lua-child",
+       "name": "web",
+       "status": "Synced",
+       "health": {
+        "status": "Progressing",
+        "message": "Waiting for rollout to finish: 0 of 1 updated replicas are available..."
+       }
+      }
+     ],
+     "sync": {
+      "status": "Synced",
+      "revision": "03735d295e9c36f5b707dd7a8a4e9787334c4390"
+     },
+     "health": {
+      "status": "Progressing"
+     },
+     "reconciledAt": "2026-10-03T06:33:40Z",
+     "operationState": {
+      "operation": {
+       "sync": {
+        "revision": "03735d295e9c36f5b707dd7a8a4e9787334c4390"
+       },
+       "initiatedBy": {
+        "automated": true
+       },
+       "retry": {
+        "limit": 5
+       }
+      },
+      "phase": "Succeeded",
+      "message": "successfully synced (all tasks run)",
+      "syncResult": {
+       "resources": [
+        {
+         "group": "apps",
+         "version": "v1",
+         "kind": "Deployment",
+         "namespace": "ase-lua-child",
+         "name": "web",
+         "status": "Synced",
+         "message": "deployment.apps/web created",
+         "hookPhase": "Running",
+         "syncPhase": "Sync"
+        }
+       ],
+       "revision": "03735d295e9c36f5b707dd7a8a4e9787334c4390",
+       "source": {
+        "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+        "path": "lua-child",
+        "targetRevision": "main"
+       }
+      },
+      "startedAt": "2026-10-03T06:33:40Z",
+      "finishedAt": "2026-10-03T06:33:40Z"
+     },
+     "resourceHealthSource": "appTree"
+    }
+   },
+   "Project": {
+    "metadata": {
+     "name": "default",
+     "namespace": "argocd"
+    },
+    "spec": {}
+   },
+   "Tree": {
+    "nodes": [
+     {
+      "version": "v1",
+      "kind": "Pod",
+      "namespace": "ase-lua-child",
+      "name": "web-957bd8ddf-xgwmv",
+      "uid": "95f60666-7143-4a32-9f41-f5073cd3b173",
+      "parentRefs": [
+       {
+        "group": "apps",
+        "version": "v1",
+        "kind": "ReplicaSet",
+        "namespace": "ase-lua-child",
+        "name": "web-957bd8ddf",
+        "uid": "5eb9a47c-ba86-4dbb-b0bf-8d8b8ebbbbd6"
+       }
+      ],
+      "health": {
+       "status": "Progressing"
+      },
+      "info": [
+       {
+        "name": "Status Reason",
+        "value": "Running"
+       },
+       {
+        "name": "Node",
+        "value": "ase-v3-5-3-control-plane"
+       },
+       {
+        "name": "Containers",
+        "value": "0/1"
+       },
+       {
+        "name": "cpu",
+        "value": "0"
+       },
+       {
+        "name": "memory",
+        "value": "0"
+       }
+      ]
+     },
+     {
+      "group": "apps",
+      "version": "v1",
+      "kind": "Deployment",
+      "namespace": "ase-lua-child",
+      "name": "web",
+      "uid": "ef0cbd81-e39e-4ee2-95e0-b86557bfca0a",
+      "health": {
+       "status": "Progressing",
+       "message": "Waiting for rollout to finish: 0 of 1 updated replicas are available..."
+      },
+      "info": [
+       {
+        "name": "Revision",
+        "value": "Rev:1"
+       }
+      ]
+     },
+     {
+      "group": "apps",
+      "version": "v1",
+      "kind": "ReplicaSet",
+      "namespace": "ase-lua-child",
+      "name": "web-957bd8ddf",
+      "uid": "5eb9a47c-ba86-4dbb-b0bf-8d8b8ebbbbd6",
+      "parentRefs": [
+       {
+        "group": "apps",
+        "version": "v1",
+        "kind": "Deployment",
+        "namespace": "ase-lua-child",
+        "name": "web",
+        "uid": "ef0cbd81-e39e-4ee2-95e0-b86557bfca0a"
+       }
+      ],
+      "health": {
+       "status": "Progressing",
+       "message": "Waiting for rollout to finish: 0 out of 1 new replicas are available..."
+      },
+      "info": [
+       {
+        "name": "Revision",
+        "value": "Rev:1"
+       }
+      ]
+     }
+    ]
+   },
+   "Events": null,
+   "Children": {},
+   "Unavailable": {}
+  }
+ },
+ "Unavailable": {}
+}

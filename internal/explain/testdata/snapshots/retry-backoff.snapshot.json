@@ -1,0 +1,226 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:33:24.936606+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-backoff",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-backoff\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-backoff\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"backoff\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"backoff\":{\"duration\":\"1h\",\"factor\":2,\"maxDuration\":\"2h\"},\"limit\":5}}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "backoff",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-backoff"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "retry": {
+     "limit": 5,
+     "backoff": {
+      "duration": "1h",
+      "factor": 2,
+      "maxDuration": "2h"
+     }
+    }
+   }
+  },
+  "operation": {
+   "sync": {
+    "revision": "1e5c3370c10f0da9d9e4f007d4532aebc9d54066"
+   },
+   "initiatedBy": {
+    "automated": true
+   },
+   "retry": {
+    "limit": 5,
+    "backoff": {
+     "duration": "1h",
+     "factor": 2,
+     "maxDuration": "2h"
+    }
+   }
+  },
+  "status": {
+   "resources": [
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "ase-backoff",
+     "name": "c",
+     "status": "OutOfSync",
+     "health": {
+      "status": "Missing"
+     }
+    },
+    {
+     "group": "batch",
+     "version": "v1",
+     "kind": "Job",
+     "namespace": "ase-backoff",
+     "name": "bad",
+     "health": {
+      "status": "Degraded",
+      "message": "Job has reached the specified backoff limit"
+     },
+     "hook": true,
+     "requiresPruning": true
+    }
+   ],
+   "sync": {
+    "status": "OutOfSync",
+    "revision": "1e5c3370c10f0da9d9e4f007d4532aebc9d54066"
+   },
+   "health": {
+    "status": "Missing"
+   },
+   "reconciledAt": "2026-10-03T06:33:20Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "1e5c3370c10f0da9d9e4f007d4532aebc9d54066"
+     },
+     "initiatedBy": {
+      "automated": true
+     },
+     "retry": {
+      "limit": 5,
+      "backoff": {
+       "duration": "1h",
+       "factor": 2,
+       "maxDuration": "2h"
+      }
+     }
+    },
+    "phase": "Running",
+    "message": "one or more synchronization tasks completed unsuccessfully. Retrying attempt #1 at 7:33AM.",
+    "syncResult": {
+     "resources": [
+      {
+       "group": "batch",
+       "version": "v1",
+       "kind": "Job",
+       "namespace": "ase-backoff",
+       "name": "bad",
+       "status": "Synced",
+       "message": "Job has reached the specified backoff limit",
+       "hookType": "PreSync",
+       "hookPhase": "Failed",
+       "syncPhase": "PreSync"
+      }
+     ],
+     "revision": "1e5c3370c10f0da9d9e4f007d4532aebc9d54066",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "backoff",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T06:33:20Z",
+    "finishedAt": "2026-10-03T06:33:23Z",
+    "retryCount": 1
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "ase-backoff",
+    "name": "c",
+    "health": {
+     "status": "Missing"
+    }
+   },
+   {
+    "version": "v1",
+    "kind": "Pod",
+    "namespace": "ase-backoff",
+    "name": "bad-6nf5w",
+    "uid": "2e038c33-7a5a-4baa-9a23-aefc1345c35f",
+    "parentRefs": [
+     {
+      "group": "batch",
+      "version": "v1",
+      "kind": "Job",
+      "namespace": "ase-backoff",
+      "name": "bad",
+      "uid": "5552e14e-80c0-4dbb-8ed5-566136980353"
+     }
+    ],
+    "health": {
+     "status": "Degraded",
+     "message": "container \"main\" failed with exit code 1"
+    },
+    "info": [
+     {
+      "name": "Status Reason",
+      "value": "Error"
+     },
+     {
+      "name": "Node",
+      "value": "ase-v3-5-3-control-plane"
+     },
+     {
+      "name": "Containers",
+      "value": "0/1"
+     }
+    ]
+   },
+   {
+    "group": "batch",
+    "version": "v1",
+    "kind": "Job",
+    "namespace": "ase-backoff",
+    "name": "bad",
+    "uid": "5552e14e-80c0-4dbb-8ed5-566136980353",
+    "health": {
+     "status": "Degraded",
+     "message": "Job has reached the specified backoff limit"
+    }
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to '1e5c3370c10f0da9d9e4f007d4532aebc9d54066'",
+   "lastTimestamp": "2026-10-03T06:33:20Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:33:20Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T06:33:20Z",
+   "count": 1
+  }
+ ],
+ "Children": {},
+ "Unavailable": {}
+}

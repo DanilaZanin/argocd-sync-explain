@@ -1,0 +1,35 @@
+argocd/ase-wave  sync=OutOfSync health=Progressing  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: WAITING
+  The sync operation is running and waits on: Deployment/web.
+
+Operation: running (phase=Running, automated sync, started 2026-10-03T06:32:15Z)
+  message: waiting for healthy state of apps/Deployment/web
+  position (reconstructed): phase=Sync wave=0
+    basis: reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor
+
+Blockers:
+  [waiting-on] resource Deployment/web (ns ase-wave)
+      applied by the operation; Argo CD now waits for its health to become Healthy before starting later waves or phases
+      syncPhase=Sync hookType=- hookPhase=Running wave=0
+      health: Progressing: Waiting for rollout to finish: 0 of 1 updated replicas are available...  [resource tree node health]
+      message: deployment.apps/web created
+      source: .status.operationState.syncResult.resources
+
+Pending (no result yet, 1): ConfigMap/later  waves=[1]
+    resources without a result yet; prune tasks run in reverse wave order, PruneLast adds a final wave, and hooks are not listed with waves, so this is a reconstruction, not the controller's task list
+
+Observations (context, not blockers):
+  under Deployment/web: ReplicaSet/web-957bd8ddf (ns ase-wave) health=Progressing: Waiting for rollout to finish: 0 out of 1 new replicas are available...
+  under Deployment/web: Pod/web-957bd8ddf-7v2d6 (ns ase-wave) health=Progressing Status Reason=Running Containers=0/1
+
+OutOfSync resources:
+  ConfigMap/later (ns ase-wave)  missing: yes (resource health is Missing)
+
+Auto-sync (enabled=true):
+  verified: automated sync is enabled (an `automated` block without `enabled` means enabled)  [.spec.syncPolicy.automated]
+  verified: an operation is already in progress; auto-sync does not start another  [.operation / .status.operationState.phase]
+
+Notes:
+  field-level differences are not shown; run `argocd app diff ase-wave`  [-]

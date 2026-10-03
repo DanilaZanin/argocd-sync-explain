@@ -1,0 +1,132 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:33:16.062316+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-denym",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-denym\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-denym\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"ase-denym\",\"source\":{\"path\":\"denym\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"syncOptions\":[]}}}\n"
+   }
+  },
+  "spec": {
+   "project": "ase-denym",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "denym",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-denym"
+   }
+  },
+  "operation": {
+   "sync": {
+    "revision": "main"
+   },
+   "initiatedBy": {
+    "username": "e2e"
+   },
+   "retry": {}
+  },
+  "status": {
+   "resources": [
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "ase-denym",
+     "name": "c",
+     "status": "OutOfSync",
+     "health": {
+      "status": "Missing"
+     }
+    }
+   ],
+   "sync": {
+    "status": "OutOfSync",
+    "revision": "fb31b708edc656c7eeb281d071db90e5a5ee3662"
+   },
+   "health": {
+    "status": "Missing"
+   },
+   "reconciledAt": "2026-10-03T06:33:12Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "main"
+     },
+     "initiatedBy": {
+      "username": "e2e"
+     },
+     "retry": {}
+    },
+    "phase": "Running",
+    "message": "Sync operation blocked by sync window",
+    "syncResult": {
+     "revision": "main",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "denym",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T06:33:14Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "ase-denym",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"AppProject\",\"metadata\":{\"annotations\":{},\"name\":\"ase-denym\",\"namespace\":\"argocd\"},\"spec\":{\"clusterResourceWhitelist\":[{\"group\":\"*\",\"kind\":\"*\"}],\"destinations\":[{\"namespace\":\"*\",\"server\":\"*\"}],\"sourceRepos\":[\"*\"],\"syncWindows\":[{\"applications\":[\"*\"],\"duration\":\"1h\",\"kind\":\"deny\",\"schedule\":\"* * * * *\"}]}}\n"
+   }
+  },
+  "spec": {
+   "syncWindows": [
+    {
+     "kind": "deny",
+     "schedule": "* * * * *",
+     "duration": "1h",
+     "applications": [
+      "*"
+     ]
+    }
+   ]
+  }
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "ase-denym",
+    "name": "c",
+    "health": {
+     "status": "Missing"
+    }
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:33:12Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T06:33:12Z",
+   "count": 1
+  }
+ ],
+ "Children": {},
+ "Unavailable": {}
+}

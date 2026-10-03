@@ -1,0 +1,107 @@
+{
+  "application": {
+    "name": "ase-prune",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "OutOfSync",
+    "healthStatus": "Healthy",
+    "comparedRevisions": [
+      "af27f507f52c3bef24212f94f517a954b0c14729"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git prune @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "waiting",
+  "exitCode": 2,
+  "summary": "The sync operation is running and waits on: pruning confirmation for ConfigMap/gone.",
+  "operation": {
+    "kind": "running",
+    "phase": "Running",
+    "message": "waiting for pruning confirmation of /ConfigMap/gone",
+    "startedAt": "2026-10-03T06:32:47Z",
+    "initiator": "automated sync",
+    "revisions": [
+      "af27f507f52c3bef24212f94f517a954b0c14729"
+    ],
+    "retryCount": 0,
+    "retry": {
+      "limit": 0,
+      "unlimited": false,
+      "backoff": "duration=5s factor=2 maxDuration=3m0s",
+      "source": ".status.operationState.operation.retry"
+    },
+    "waitReason": "prune-confirmation",
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.message",
+      ".status.operationState.syncResult.resources"
+    ]
+  },
+  "position": {
+    "phase": "unknown",
+    "wave": "unknown",
+    "basis": "reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor; no results recorded yet"
+  },
+  "blockers": [
+    {
+      "role": "waiting-on",
+      "type": "prune-confirmation",
+      "ref": {
+        "kind": "ConfigMap",
+        "name": "gone"
+      },
+      "id": "/ConfigMap//gone",
+      "wave": "unknown",
+      "message": "waiting for pruning confirmation of /ConfigMap/gone",
+      "why": "the controller reports it waits for confirmation to prune this resource (Prune=confirm)",
+      "source": ".status.operationState.message"
+    }
+  ],
+  "pending": {
+    "count": 1,
+    "waves": [
+      0
+    ],
+    "resources": [
+      "ConfigMap/keep"
+    ],
+    "basis": ".status.resources minus .status.operationState.syncResult.resources",
+    "caveat": "resources without a result yet; prune tasks run in reverse wave order, PruneLast adds a final wave, and hooks are not listed with waves, so this is a reconstruction, not the controller's task list"
+  },
+  "outOfSync": [
+    {
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-prune",
+        "name": "gone"
+      },
+      "status": "OutOfSync",
+      "requiresPruning": true,
+      "missing": "no (exists in the cluster, not in the desired state)",
+      "source": ".status.resources[]"
+    }
+  ],
+  "autoSync": {
+    "enabled": true,
+    "verified": [
+      {
+        "text": "automated sync is enabled (an `automated` block without `enabled` means enabled)",
+        "source": ".spec.syncPolicy.automated"
+      },
+      {
+        "text": "an operation is already in progress; auto-sync does not start another",
+        "blocks": true,
+        "source": ".operation / .status.operationState.phase"
+      }
+    ],
+    "possible": []
+  },
+  "notes": [
+    {
+      "code": "no-field-diff",
+      "text": "field-level differences are not shown; run `argocd app diff ase-prune`",
+      "source": "-"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+argocd/ase-invalid  sync=Unknown health=Healthy  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: ERROR
+  Argo CD reports an error condition: ComparisonError: Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = FailedPrecondition desc = Failed to unmarshal "bad.yaml": failed to unmarshal manifest: error converting YAML to JSON: yaml: line 3: did not find expected ',' or ']'.
+
+Operation: none
+
+Auto-sync (enabled=true):
+  verified: automated sync is enabled (an `automated` block without `enabled` means enabled)  [.spec.syncPolicy.automated]
+  verified: sync status is Unknown: auto-sync only acts on OutOfSync  [.status.sync.status]
+
+Conditions:
+  ComparisonError: Failed to load target state: failed to generate manifest for source 1 of 1: rpc error: code = FailedPrecondition desc = Failed to unmarshal "bad.yaml": failed to unmarshal manifest: error converting YAML to JSON: yaml: line 3: did not find expected ',' or ']'

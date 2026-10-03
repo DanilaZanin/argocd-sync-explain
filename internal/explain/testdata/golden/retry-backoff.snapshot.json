@@ -1,0 +1,97 @@
+{
+  "application": {
+    "name": "ase-backoff",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "OutOfSync",
+    "healthStatus": "Missing",
+    "comparedRevisions": [
+      "1e5c3370c10f0da9d9e4f007d4532aebc9d54066"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git backoff @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "retrying",
+  "exitCode": 2,
+  "summary": "The last sync attempt failed; the operation is in retry backoff (attempt 1), next attempt not before 2026-10-03T08:33:23Z.",
+  "operation": {
+    "kind": "retry-backoff",
+    "phase": "Running",
+    "message": "one or more synchronization tasks completed unsuccessfully. Retrying attempt #1 at 7:33AM.",
+    "startedAt": "2026-10-03T06:33:20Z",
+    "finishedAt": "2026-10-03T06:33:23Z",
+    "initiator": "automated sync",
+    "revisions": [
+      "1e5c3370c10f0da9d9e4f007d4532aebc9d54066"
+    ],
+    "retryCount": 1,
+    "retry": {
+      "limit": 5,
+      "unlimited": false,
+      "backoff": "duration=1h factor=2 maxDuration=2h",
+      "source": ".status.operationState.operation.retry"
+    },
+    "nextRetryNotBefore": "2026-10-03T08:33:23Z",
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.finishedAt",
+      ".status.operationState.operation.retry"
+    ]
+  },
+  "blockers": [
+    {
+      "role": "failed",
+      "type": "hook",
+      "ref": {
+        "group": "batch",
+        "kind": "Job",
+        "namespace": "ase-backoff",
+        "name": "bad"
+      },
+      "id": "batch/Job/ase-backoff/bad",
+      "syncPhase": "PreSync",
+      "hookType": "PreSync",
+      "hookPhase": "Failed",
+      "applyResult": "Synced",
+      "wave": "unknown (hook waves are annotations on the manifest, not recorded in the Application)",
+      "message": "Job has reached the specified backoff limit",
+      "why": "PreSync hook ended with phase Failed",
+      "source": ".status.operationState.syncResult.resources"
+    }
+  ],
+  "outOfSync": [
+    {
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-backoff",
+        "name": "c"
+      },
+      "status": "OutOfSync",
+      "missing": "yes (resource health is Missing)",
+      "source": ".status.resources[]"
+    }
+  ],
+  "autoSync": {
+    "enabled": true,
+    "verified": [
+      {
+        "text": "automated sync is enabled (an `automated` block without `enabled` means enabled)",
+        "source": ".spec.syncPolicy.automated"
+      },
+      {
+        "text": "the operation is in retry backoff: attempt 1 of 5, next attempt not before 2026-10-03T08:33:23Z (the earliest time; the controller retries on its next pass after it)",
+        "blocks": true,
+        "source": ".status.operationState (phase=Running, finishedAt set), .operation.retry"
+      }
+    ],
+    "possible": []
+  },
+  "notes": [
+    {
+      "code": "no-field-diff",
+      "text": "field-level differences are not shown; run `argocd app diff ase-backoff`",
+      "source": "-"
+    }
+  ]
+}

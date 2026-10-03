@@ -1,0 +1,86 @@
+{
+  "application": {
+    "name": "ase-lastwave",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "Synced",
+    "healthStatus": "Progressing",
+    "comparedRevisions": [
+      "bc9ea4a562654cecd978728324969a9d4e219264"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git lastwave @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "progressing",
+  "exitCode": 2,
+  "summary": "The last sync operation finished successfully; the rollout is still Progressing. That is not a blocked sync: the operation does not hold for the health of the last wave.",
+  "operation": {
+    "kind": "finished",
+    "phase": "Succeeded",
+    "message": "successfully synced (all tasks run)",
+    "startedAt": "2026-10-03T06:32:23Z",
+    "finishedAt": "2026-10-03T06:32:23Z",
+    "initiator": "automated sync",
+    "revisions": [
+      "bc9ea4a562654cecd978728324969a9d4e219264"
+    ],
+    "retryCount": 0,
+    "retry": {
+      "limit": 0,
+      "unlimited": false,
+      "backoff": "duration=5s factor=2 maxDuration=3m0s",
+      "source": ".status.operationState.operation.retry"
+    },
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.message"
+    ]
+  },
+  "observations": [
+    {
+      "under": "application health",
+      "ref": {
+        "group": "apps",
+        "kind": "Deployment",
+        "namespace": "ase-lastwave",
+        "name": "web"
+      },
+      "health": {
+        "status": "Progressing",
+        "message": "Waiting for rollout to finish: 0 of 1 updated replicas are available...",
+        "source": "resource tree node health"
+      },
+      "source": "resource tree node health"
+    },
+    {
+      "under": "Deployment/web",
+      "ref": {
+        "group": "apps",
+        "kind": "ReplicaSet",
+        "namespace": "ase-lastwave",
+        "name": "web-957bd8ddf"
+      },
+      "health": {
+        "status": "Progressing",
+        "message": "Waiting for rollout to finish: 0 out of 1 new replicas are available...",
+        "source": "resource tree node health"
+      },
+      "source": "resource tree node"
+    },
+    {
+      "under": "Deployment/web",
+      "ref": {
+        "kind": "Pod",
+        "namespace": "ase-lastwave",
+        "name": "web-957bd8ddf-p68v7"
+      },
+      "health": {
+        "status": "Progressing",
+        "source": "resource tree node health"
+      },
+      "info": "Status Reason=Running Containers=0/1",
+      "source": "resource tree node"
+    }
+  ]
+}

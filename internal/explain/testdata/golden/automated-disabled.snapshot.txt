@@ -1,0 +1,19 @@
+argocd/ase-noauto  sync=OutOfSync health=Missing  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: OUT-OF-SYNC
+  OutOfSync: 1 resource(s) differ from the desired state. Auto-sync: automated sync is not configured: Argo CD does not start syncs for this Application by itself.
+
+Operation: none
+
+Observations (context, not blockers):
+  under application health: ConfigMap/c (ns ase-noauto) health=Missing
+
+OutOfSync resources:
+  ConfigMap/c (ns ase-noauto)  missing: yes (resource health is Missing)
+
+Auto-sync (enabled=false):
+  verified: automated sync is not configured: Argo CD does not start syncs for this Application by itself  [.spec.syncPolicy.automated (absent)]
+
+Notes:
+  field-level differences are not shown; run `argocd app diff ase-noauto`  [-]

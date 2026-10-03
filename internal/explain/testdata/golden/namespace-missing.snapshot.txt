@@ -1,0 +1,32 @@
+argocd/ase-nons  sync=OutOfSync health=Missing  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: FAILED
+  The last sync operation failed on ConfigMap/c: one or more objects failed to apply, reason: namespaces "ase-does-not-exist" not found
+
+Operation: finished (phase=Failed, manual (e2e), started 2026-10-03T06:33:28Z, finished 2026-10-03T06:33:29Z)
+  message: one or more objects failed to apply, reason: namespaces "ase-does-not-exist" not found
+  retry: limit=0, duration=5s factor=2 maxDuration=3m0s (.status.operationState.operation.retry)
+
+Blockers:
+  [failed] resource ConfigMap/c (ns ase-does-not-exist)
+      applying (or waiting for the health of) this resource failed
+      syncPhase=Sync hookType=- hookPhase=Failed wave=0
+      health: Missing  [resource tree node health]
+      message: namespaces "ase-does-not-exist" not found
+      source: .status.operationState.syncResult.resources
+
+Observations (context, not blockers):
+  under application health: ConfigMap/c (ns ase-does-not-exist) health=Missing
+
+OutOfSync resources:
+  ConfigMap/c (ns ase-does-not-exist)  missing: yes (resource health is Missing)
+
+Auto-sync (enabled=false):
+  verified: automated sync is not configured: Argo CD does not start syncs for this Application by itself  [.spec.syncPolicy.automated (absent)]
+
+Recent warning events:
+  OperationCompleted: Sync operation to 90c3de94a40c4ca2697cf43a8dd8ef630c1a3195 failed: one or more objects failed to apply, reason: namespaces "ase-does-not-exist" not found
+
+Notes:
+  field-level differences are not shown; run `argocd app diff ase-nons`  [-]

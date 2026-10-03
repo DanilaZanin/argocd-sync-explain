@@ -1,0 +1,23 @@
+argocd/ase-deny  sync=OutOfSync health=Missing  project=ase-deny
+mode: api (Argo CD v3.5.3)
+
+VERDICT: OUT-OF-SYNC
+  OutOfSync: 1 resource(s) differ from the desired state. Auto-sync: a sync window blocks automated syncs now (a deny window is active): the controller does not start an auto-sync while the windows deny it, and records nothing in the Application.
+
+Operation: none
+
+Observations (context, not blockers):
+  under application health: ConfigMap/c (ns ase-deny) health=Missing
+
+OutOfSync resources:
+  ConfigMap/c (ns ase-deny)  missing: yes (resource health is Missing)
+
+Auto-sync (enabled=true):
+  verified: automated sync is enabled (an `automated` block without `enabled` means enabled)  [.spec.syncPolicy.automated]
+  verified: a sync window blocks automated syncs now (a deny window is active): the controller does not start an auto-sync while the windows deny it, and records nothing in the Application  [AppProject .spec.syncWindows evaluated for an automated sync]
+
+Sync windows (Argo CD 3.5 rules (syncOverrun supported)): canSync=false, a deny window is active
+  matches: deny schedule="* * * * *" duration=1h tz=UTC manualSync=false
+
+Notes:
+  field-level differences are not shown; run `argocd app diff ase-deny`  [-]

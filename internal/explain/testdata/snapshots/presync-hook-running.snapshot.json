@@ -1,0 +1,208 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:32:28.879387+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-hookrun",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-hookrun\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-hookrun\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"hookrun\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"limit\":0}}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "hookrun",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-hookrun"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "retry": {}
+   }
+  },
+  "operation": {
+   "sync": {
+    "revision": "1ba1f857e59937a9748a7fb49fb391c5b0ea053d"
+   },
+   "initiatedBy": {
+    "automated": true
+   },
+   "retry": {}
+  },
+  "status": {
+   "resources": [
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "ase-hookrun",
+     "name": "c",
+     "status": "OutOfSync",
+     "health": {
+      "status": "Missing"
+     }
+    },
+    {
+     "group": "batch",
+     "version": "v1",
+     "kind": "Job",
+     "namespace": "ase-hookrun",
+     "name": "slow",
+     "health": {
+      "status": "Progressing"
+     },
+     "hook": true,
+     "requiresPruning": true
+    }
+   ],
+   "sync": {
+    "status": "OutOfSync",
+    "revision": "1ba1f857e59937a9748a7fb49fb391c5b0ea053d"
+   },
+   "health": {
+    "status": "Missing"
+   },
+   "reconciledAt": "2026-10-03T06:32:25Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "1ba1f857e59937a9748a7fb49fb391c5b0ea053d"
+     },
+     "initiatedBy": {
+      "automated": true
+     },
+     "retry": {}
+    },
+    "phase": "Running",
+    "message": "waiting for completion of hook batch/Job/slow",
+    "syncResult": {
+     "resources": [
+      {
+       "group": "batch",
+       "version": "v1",
+       "kind": "Job",
+       "namespace": "ase-hookrun",
+       "name": "slow",
+       "status": "Synced",
+       "message": "job.batch/slow created",
+       "hookType": "PreSync",
+       "hookPhase": "Running",
+       "syncPhase": "PreSync"
+      }
+     ],
+     "revision": "1ba1f857e59937a9748a7fb49fb391c5b0ea053d",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "hookrun",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T06:32:25Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "ase-hookrun",
+    "name": "c",
+    "health": {
+     "status": "Missing"
+    }
+   },
+   {
+    "version": "v1",
+    "kind": "Pod",
+    "namespace": "ase-hookrun",
+    "name": "slow-8zv9b",
+    "uid": "dfd646df-32d0-466c-a8d5-a14ea7645b62",
+    "parentRefs": [
+     {
+      "group": "batch",
+      "version": "v1",
+      "kind": "Job",
+      "namespace": "ase-hookrun",
+      "name": "slow",
+      "uid": "0e08fb9a-4b8c-4ddf-85ae-dd42940820d8"
+     }
+    ],
+    "health": {
+     "status": "Progressing"
+    },
+    "info": [
+     {
+      "name": "Status Reason",
+      "value": "Running"
+     },
+     {
+      "name": "Node",
+      "value": "ase-v3-5-3-control-plane"
+     },
+     {
+      "name": "Containers",
+      "value": "1/1"
+     },
+     {
+      "name": "cpu",
+      "value": "0"
+     },
+     {
+      "name": "memory",
+      "value": "0"
+     }
+    ]
+   },
+   {
+    "group": "batch",
+    "version": "v1",
+    "kind": "Job",
+    "namespace": "ase-hookrun",
+    "name": "slow",
+    "uid": "0e08fb9a-4b8c-4ddf-85ae-dd42940820d8",
+    "health": {
+     "status": "Progressing"
+    }
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to '1ba1f857e59937a9748a7fb49fb391c5b0ea053d'",
+   "lastTimestamp": "2026-10-03T06:32:25Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:32:25Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T06:32:25Z",
+   "count": 1
+  }
+ ],
+ "Children": {},
+ "Unavailable": {}
+}

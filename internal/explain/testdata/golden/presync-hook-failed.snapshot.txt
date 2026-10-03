@@ -1,0 +1,35 @@
+argocd/ase-hookfail  sync=OutOfSync health=Missing  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: FAILED
+  The last sync operation failed on Job/bad: one or more synchronization tasks completed unsuccessfully
+
+Operation: finished (phase=Failed, automated sync, started 2026-10-03T06:32:29Z, finished 2026-10-03T06:32:32Z)
+  message: one or more synchronization tasks completed unsuccessfully
+  retry: limit=0, duration=5s factor=2 maxDuration=3m0s (.status.operationState.operation.retry)
+
+Blockers:
+  [failed] hook Job/bad (ns ase-hookfail)
+      PreSync hook ended with phase Failed
+      syncPhase=PreSync hookType=PreSync hookPhase=Failed wave=unknown (hook waves are annotations on the manifest, not recorded in the Application)
+      message: Job has reached the specified backoff limit
+      source: .status.operationState.syncResult.resources
+
+Observations (context, not blockers):
+  under application health: ConfigMap/c (ns ase-hookfail) health=Missing
+
+OutOfSync resources:
+  ConfigMap/c (ns ase-hookfail)  missing: yes (resource health is Missing)
+
+Auto-sync (enabled=true):
+  verified: automated sync is enabled (an `automated` block without `enabled` means enabled)  [.spec.syncPolicy.automated]
+  verified: the last sync attempt to a3826e2f with the same revision and source failed and auto-sync does not retry it: one or more synchronization tasks completed unsuccessfully  [.status.operationState (phase, message, syncResult.revision, syncResult.source)]
+
+Conditions:
+  SyncError: Failed last sync attempt to [a3826e2f899ea29587e5e1ea703c742dedc4192f]: one or more synchronization tasks completed unsuccessfully
+
+Recent warning events:
+  OperationCompleted: Sync operation to a3826e2f899ea29587e5e1ea703c742dedc4192f failed: one or more synchronization tasks completed unsuccessfully
+
+Notes:
+  field-level differences are not shown; run `argocd app diff ase-hookfail`  [-]

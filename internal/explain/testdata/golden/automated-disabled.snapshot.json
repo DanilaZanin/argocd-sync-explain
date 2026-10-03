@@ -1,0 +1,68 @@
+{
+  "application": {
+    "name": "ase-noauto",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "OutOfSync",
+    "healthStatus": "Missing",
+    "comparedRevisions": [
+      "134788d001b1b9f0bffaeb289738254a8b9af157"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git noauto @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "out-of-sync",
+  "exitCode": 2,
+  "summary": "OutOfSync: 1 resource(s) differ from the desired state. Auto-sync: automated sync is not configured: Argo CD does not start syncs for this Application by itself.",
+  "operation": {
+    "kind": "none",
+    "retryCount": 0,
+    "sources": []
+  },
+  "observations": [
+    {
+      "under": "application health",
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-noauto",
+        "name": "c"
+      },
+      "health": {
+        "status": "Missing",
+        "source": "resource tree node health"
+      },
+      "source": "resource tree node health"
+    }
+  ],
+  "outOfSync": [
+    {
+      "ref": {
+        "kind": "ConfigMap",
+        "namespace": "ase-noauto",
+        "name": "c"
+      },
+      "status": "OutOfSync",
+      "missing": "yes (resource health is Missing)",
+      "source": ".status.resources[]"
+    }
+  ],
+  "autoSync": {
+    "enabled": false,
+    "verified": [
+      {
+        "text": "automated sync is not configured: Argo CD does not start syncs for this Application by itself",
+        "blocks": true,
+        "source": ".spec.syncPolicy.automated (absent)"
+      }
+    ],
+    "possible": []
+  },
+  "notes": [
+    {
+      "code": "no-field-diff",
+      "text": "field-level differences are not shown; run `argocd app diff ase-noauto`",
+      "source": "-"
+    }
+  ]
+}

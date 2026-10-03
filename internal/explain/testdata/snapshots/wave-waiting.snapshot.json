@@ -1,0 +1,250 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T09:32:19.398875+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-wave",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-wave\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-wave\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"wave\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"limit\":0}}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "wave",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-wave"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "retry": {}
+   }
+  },
+  "operation": {
+   "sync": {
+    "revision": "7dc9dcd2129de79343e4d58e854892f2cced1a56"
+   },
+   "initiatedBy": {
+    "automated": true
+   },
+   "retry": {}
+  },
+  "status": {
+   "resources": [
+    {
+     "version": "v1",
+     "kind": "ConfigMap",
+     "namespace": "ase-wave",
+     "name": "later",
+     "status": "OutOfSync",
+     "health": {
+      "status": "Missing"
+     },
+     "syncWave": 1
+    },
+    {
+     "group": "apps",
+     "version": "v1",
+     "kind": "Deployment",
+     "namespace": "ase-wave",
+     "name": "web",
+     "status": "Synced",
+     "health": {
+      "status": "Progressing",
+      "message": "Waiting for rollout to finish: 0 of 1 updated replicas are available..."
+     }
+    }
+   ],
+   "sync": {
+    "status": "OutOfSync",
+    "revision": "7dc9dcd2129de79343e4d58e854892f2cced1a56"
+   },
+   "health": {
+    "status": "Progressing"
+   },
+   "reconciledAt": "2026-10-03T06:32:15Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "7dc9dcd2129de79343e4d58e854892f2cced1a56"
+     },
+     "initiatedBy": {
+      "automated": true
+     },
+     "retry": {}
+    },
+    "phase": "Running",
+    "message": "waiting for healthy state of apps/Deployment/web",
+    "syncResult": {
+     "resources": [
+      {
+       "group": "apps",
+       "version": "v1",
+       "kind": "Deployment",
+       "namespace": "ase-wave",
+       "name": "web",
+       "status": "Synced",
+       "message": "deployment.apps/web created",
+       "hookPhase": "Running",
+       "syncPhase": "Sync"
+      }
+     ],
+     "revision": "7dc9dcd2129de79343e4d58e854892f2cced1a56",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "wave",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T06:32:15Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "ConfigMap",
+    "namespace": "ase-wave",
+    "name": "later",
+    "health": {
+     "status": "Missing"
+    }
+   },
+   {
+    "version": "v1",
+    "kind": "Pod",
+    "namespace": "ase-wave",
+    "name": "web-957bd8ddf-7v2d6",
+    "uid": "06b8619a-878d-445c-b1d4-ef8cc1b4dcb7",
+    "parentRefs": [
+     {
+      "group": "apps",
+      "version": "v1",
+      "kind": "ReplicaSet",
+      "namespace": "ase-wave",
+      "name": "web-957bd8ddf",
+      "uid": "83dc52fc-55f1-4395-a19f-dd58070a0993"
+     }
+    ],
+    "health": {
+     "status": "Progressing"
+    },
+    "info": [
+     {
+      "name": "Status Reason",
+      "value": "Running"
+     },
+     {
+      "name": "Node",
+      "value": "ase-v3-5-3-control-plane"
+     },
+     {
+      "name": "Containers",
+      "value": "0/1"
+     },
+     {
+      "name": "cpu",
+      "value": "0"
+     },
+     {
+      "name": "memory",
+      "value": "0"
+     }
+    ]
+   },
+   {
+    "group": "apps",
+    "version": "v1",
+    "kind": "Deployment",
+    "namespace": "ase-wave",
+    "name": "web",
+    "uid": "c936a285-0550-450c-9fb0-b090a2754a1f",
+    "health": {
+     "status": "Progressing",
+     "message": "Waiting for rollout to finish: 0 of 1 updated replicas are available..."
+    },
+    "info": [
+     {
+      "name": "Revision",
+      "value": "Rev:1"
+     }
+    ]
+   },
+   {
+    "group": "apps",
+    "version": "v1",
+    "kind": "ReplicaSet",
+    "namespace": "ase-wave",
+    "name": "web-957bd8ddf",
+    "uid": "83dc52fc-55f1-4395-a19f-dd58070a0993",
+    "parentRefs": [
+     {
+      "group": "apps",
+      "version": "v1",
+      "kind": "Deployment",
+      "namespace": "ase-wave",
+      "name": "web",
+      "uid": "c936a285-0550-450c-9fb0-b090a2754a1f"
+     }
+    ],
+    "health": {
+     "status": "Progressing",
+     "message": "Waiting for rollout to finish: 0 out of 1 new replicas are available..."
+    },
+    "info": [
+     {
+      "name": "Revision",
+      "value": "Rev:1"
+     }
+    ]
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to '7dc9dcd2129de79343e4d58e854892f2cced1a56'",
+   "lastTimestamp": "2026-10-03T06:32:15Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T06:32:15Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T06:32:15Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status: Missing -\u003e Progressing",
+   "lastTimestamp": "2026-10-03T06:32:16Z",
+   "count": 1
+  }
+ ],
+ "Children": {},
+ "Unavailable": {}
+}
