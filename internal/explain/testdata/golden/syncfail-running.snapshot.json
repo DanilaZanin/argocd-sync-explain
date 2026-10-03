@@ -1,0 +1,144 @@
+{
+  "application": {
+    "name": "ase-syncfail",
+    "namespace": "argocd",
+    "project": "default",
+    "syncStatus": "OutOfSync",
+    "healthStatus": "Missing",
+    "comparedRevisions": [
+      "61951a7ece3c40e7ab02918ecd771172ffef7155"
+    ],
+    "source": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git syncfail @ main"
+  },
+  "mode": "api",
+  "argoVersion": "v3.5.3",
+  "verdict": "waiting",
+  "exitCode": 2,
+  "summary": "The sync operation is running and waits on: SyncFail hook Job/onfail. Already failed: Deployment/neg.",
+  "operation": {
+    "kind": "running",
+    "phase": "Running",
+    "message": "waiting for completion of hook batch/Job/onfail",
+    "startedAt": "2026-10-03T08:50:09Z",
+    "initiator": "automated sync",
+    "revisions": [
+      "61951a7ece3c40e7ab02918ecd771172ffef7155"
+    ],
+    "retryCount": 0,
+    "retry": {
+      "limit": 0,
+      "unlimited": false,
+      "backoff": "duration=5s factor=2 maxDuration=3m0s",
+      "source": ".status.operationState.operation.retry"
+    },
+    "waitReason": "hook-completion",
+    "sources": [
+      ".status.operationState.phase",
+      ".status.operationState.message",
+      ".status.operationState.syncResult.resources"
+    ]
+  },
+  "position": {
+    "phase": "SyncFail",
+    "wave": "unknown",
+    "basis": "reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor"
+  },
+  "blockers": [
+    {
+      "role": "waiting-on",
+      "type": "hook",
+      "ref": {
+        "group": "batch",
+        "kind": "Job",
+        "namespace": "ase-syncfail",
+        "name": "onfail"
+      },
+      "id": "batch/Job/ase-syncfail/onfail",
+      "syncPhase": "SyncFail",
+      "hookType": "SyncFail",
+      "hookPhase": "Running",
+      "applyResult": "Synced",
+      "wave": "unknown (hook waves are annotations on the manifest, not recorded in the Application)",
+      "message": "job.batch/onfail created",
+      "health": {
+        "status": "Progressing",
+        "source": "resource tree node health"
+      },
+      "why": "SyncFail hook has not finished; the operation does not start later tasks until it completes",
+      "source": ".status.operationState.syncResult.resources"
+    },
+    {
+      "role": "failed",
+      "type": "resource",
+      "ref": {
+        "group": "apps",
+        "kind": "Deployment",
+        "namespace": "ase-syncfail",
+        "name": "neg"
+      },
+      "id": "apps/Deployment/ase-syncfail/neg",
+      "syncPhase": "Sync",
+      "hookPhase": "Failed",
+      "applyResult": "SyncFailed",
+      "wave": "0",
+      "message": "Deployment.apps \"neg\" is invalid: spec.replicas: Invalid value: -1: must be greater than or equal to 0",
+      "health": {
+        "status": "Missing",
+        "source": "resource tree node health"
+      },
+      "why": "applying (or waiting for the health of) this resource failed",
+      "source": ".status.operationState.syncResult.resources"
+    }
+  ],
+  "observations": [
+    {
+      "under": "Job/onfail",
+      "ref": {
+        "kind": "Pod",
+        "namespace": "ase-syncfail",
+        "name": "onfail-8j8v5"
+      },
+      "health": {
+        "status": "Progressing",
+        "source": "resource tree node health"
+      },
+      "info": "Status Reason=ContainerCreating Containers=0/1",
+      "source": "resource tree node"
+    }
+  ],
+  "outOfSync": [
+    {
+      "ref": {
+        "group": "apps",
+        "kind": "Deployment",
+        "namespace": "ase-syncfail",
+        "name": "neg"
+      },
+      "status": "OutOfSync",
+      "missing": "yes (resource health is Missing)",
+      "source": ".status.resources[]"
+    }
+  ],
+  "autoSync": {
+    "enabled": true,
+    "verified": [
+      {
+        "text": "automated sync is enabled (an `automated` block without `enabled` means enabled)",
+        "source": ".spec.syncPolicy.automated"
+      },
+      {
+        "text": "an operation is already in progress; auto-sync does not start another",
+        "blocks": true,
+        "source": ".operation / .status.operationState.phase"
+      }
+    ],
+    "possible": []
+  },
+  "notes": [
+    {
+      "code": "no-field-diff",
+      "text": "field-level differences are not shown; run `argocd app diff ase-syncfail`",
+      "source": "-"
+    }
+  ]
+}

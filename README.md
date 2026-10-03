@@ -17,7 +17,7 @@ mode: api (Argo CD v3.5.3)
 VERDICT: WAITING
   The sync operation is running and waits on: child Application ase-lua-child.
 
-Operation: running (phase=Running, automated sync, started 2026-10-03T07:59:21Z)
+Operation: running (phase=Running, automated sync, started 2026-10-03T08:50:25Z)
   message: waiting for healthy state of argoproj.io/Application/ase-lua-child
   position (reconstructed): phase=Sync wave=0
     basis: reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor
@@ -43,7 +43,7 @@ Auto-sync (enabled=true):
 Notes:
   field-level differences are not shown; run `argocd app diff ase-lua-parent`  [-]
 
-Child Application ase-lua-child: parent-waits
+Child Application argocd/ase-lua-child: parent-waits
   the parent's running operation waits on this child Application (task hookPhase=Running) and its health is assessed: Progressing
   explained independently:
     | argocd/ase-lua-child  sync=Synced health=Progressing  project=default
@@ -51,14 +51,14 @@ Child Application ase-lua-child: parent-waits
     | VERDICT: PROGRESSING
     |   The last sync operation finished successfully; the rollout is still Progressing. That is not a blocked sync: the operation does not hold for the health of the last wave.
     | 
-    | Operation: finished (phase=Succeeded, automated sync, started 2026-10-03T07:59:21Z, finished 2026-10-03T07:59:21Z)
+    | Operation: finished (phase=Succeeded, automated sync, started 2026-10-03T08:50:25Z, finished 2026-10-03T08:50:26Z)
     |   message: successfully synced (all tasks run)
     |   retry: limit=5, duration=5s factor=2 maxDuration=3m0s (.status.operationState.operation.retry)
     | 
     | Observations (context, not blockers):
     |   under application health: Deployment/web (ns ase-lua-child) health=Progressing: Waiting for rollout to finish: 0 of 1 updated replicas are available...
     |   under Deployment/web: ReplicaSet/web-957bd8ddf (ns ase-lua-child) health=Progressing: Waiting for rollout to finish: 0 out of 1 new replicas are available...
-    |   under Deployment/web: Pod/web-957bd8ddf-fqxjg (ns ase-lua-child) health=Progressing Status Reason=Running Containers=0/1
+    |   under Deployment/web: Pod/web-957bd8ddf-gmbnj (ns ase-lua-child) health=Progressing Status Reason=Running Containers=0/1
 ```
 
 Every output in this README is the unedited text file written by the e2e run (`ASE_E2E_RECORD=dir make e2e-full`
@@ -102,7 +102,7 @@ mode: api (Argo CD v3.5.3)
 VERDICT: WAITING
   The sync operation is running and waits on: Deployment/web.
 
-Operation: running (phase=Running, automated sync, started 2026-10-03T07:56:58Z)
+Operation: running (phase=Running, automated sync, started 2026-10-03T08:47:59Z)
   message: waiting for healthy state of apps/Deployment/web
   position (reconstructed): phase=Sync wave=0
     basis: reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor
@@ -120,7 +120,7 @@ Pending (no result yet, 1): ConfigMap/later  waves=[1]
 
 Observations (context, not blockers):
   under Deployment/web: ReplicaSet/web-957bd8ddf (ns ase-wave) health=Progressing: Waiting for rollout to finish: 0 out of 1 new replicas are available...
-  under Deployment/web: Pod/web-957bd8ddf-bdqzn (ns ase-wave) health=Progressing Status Reason=Running Containers=0/1
+  under Deployment/web: Pod/web-957bd8ddf-p5nmc (ns ase-wave) health=Progressing Status Reason=Running Containers=0/1
 
 OutOfSync resources:
   ConfigMap/later (ns ase-wave)  missing: yes (resource health is Missing)
@@ -141,9 +141,9 @@ argocd/ase-deleting  sync=Synced health=Healthy  project=default
 mode: api (Argo CD v3.5.3)
 
 VERDICT: DELETING
-  The Application is being deleted (deletionTimestamp 2026-10-03T07:59:06Z) but still exists. Held by: ConfigMap/held.
+  The Application is being deleted (deletionTimestamp 2026-10-03T08:50:08Z) but still exists. Held by: ConfigMap/held.
 
-Operation: finished (phase=Succeeded, automated sync, started 2026-10-03T07:59:05Z, finished 2026-10-03T07:59:05Z)
+Operation: finished (phase=Succeeded, automated sync, started 2026-10-03T08:50:07Z, finished 2026-10-03T08:50:08Z)
   message: successfully synced (all tasks run)
   retry: limit=0, duration=5s factor=2 maxDuration=3m0s (.status.operationState.operation.retry)
 
@@ -152,9 +152,9 @@ Blockers:
       deletion of the Application waits for this resource, which has a deletionTimestamp and is held by finalizers: ase/hold
       source: live object .metadata.finalizers
 
-Deletion (since 2026-10-03T07:59:06Z): cascade (default propagation): Argo CD deletes the managed resources and removes the finalizer only when none remain
+Deletion (since 2026-10-03T08:50:08Z): cascade (default propagation): Argo CD deletes the managed resources and removes the finalizer only when none remain
   finalizers on the Application: resources-finalizer.argocd.argoproj.io
-  remaining: ConfigMap/held (ns ase-deleting) being deleted since 2026-10-03T07:59:06Z, held by finalizers ase/hold  [live object]
+  remaining: ConfigMap/held (ns ase-deleting) being deleted since 2026-10-03T08:50:08Z, held by finalizers ase/hold  [live object]
 ```
 
 ## Two modes
@@ -268,8 +268,8 @@ digest, Argo CD `install.yaml` pinned by tag and sha256, an in-cluster Gitea hol
 
 | Argo CD | e2e scenarios passed | Wall time including cluster create and delete | Peak memory of the kind node container |
 |---|---|---|---|
-| v3.4.9 | 29 of 29 | 244 s | 1701 MiB |
-| v3.5.3 | 29 of 29 | 234 s | 1722 MiB |
+| v3.4.9 | 30 of 30 | 227 s | 1570 MiB |
+| v3.5.3 | 30 of 30 | 224 s | 1404 MiB |
 
 Every scenario is produced for real: a git commit, an Application, and the real controller doing what it does.
 The assertions are on the JSON output (identity and classification of the blocker), after explicit waits on
@@ -280,7 +280,7 @@ blocker), prune confirmation, deny window now, no active allow window, deny wind
 auto-sync absent and `enabled: false`, retry backoff and its timing, comparison error from an invalid manifest,
 unreachable repository, missing namespace, app-of-apps without and with the Application health check (child
 Progressing, child Degraded), kubeconfig-only fallback, a token that can read the parent but not the child
-Application or the project (and an unreadable root Application gives exit 3), a revision mismatch where the waiting resource changes wave in a newer commit (wave and pending become unknown), `CreateNamespace=true` next to a PreSync hook, a PruneLast task still ahead, a hook held back from deletion, and an Application being deleted while a ConfigMap holds a finalizer.
+Application or the project (and an unreadable root Application gives exit 3), a revision mismatch where the waiting resource changes wave in a newer commit (wave and pending become unknown), `CreateNamespace=true` next to a PreSync hook, a SyncFail hook running after a failed apply, a PruneLast task still ahead, a hook held back from deletion, and an Application being deleted while a ConfigMap holds a finalizer.
 
 Other checks: 135 unit tests (subtests included) under `-race`, golden text and JSON files for 16 snapshots captured from real
 Argo CD v3.5.3 controllers, a test that every field the tool declares exists in the Application and AppProject

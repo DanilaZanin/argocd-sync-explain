@@ -1,0 +1,222 @@
+{
+ "Mode": "api",
+ "Now": "2026-10-03T11:50:11.103139+03:00",
+ "ArgoVersion": "v3.5.3",
+ "App": {
+  "metadata": {
+   "name": "ase-syncfail",
+   "namespace": "argocd",
+   "annotations": {
+    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"argoproj.io/v1alpha1\",\"kind\":\"Application\",\"metadata\":{\"annotations\":{},\"name\":\"ase-syncfail\",\"namespace\":\"argocd\"},\"spec\":{\"destination\":{\"namespace\":\"ase-syncfail\",\"server\":\"https://kubernetes.default.svc\"},\"project\":\"default\",\"source\":{\"path\":\"syncfail\",\"repoURL\":\"http://gitea.git.svc.cluster.local:3000/ase/fixtures.git\",\"targetRevision\":\"main\"},\"syncPolicy\":{\"automated\":{},\"retry\":{\"limit\":0}}}}\n"
+   }
+  },
+  "spec": {
+   "project": "default",
+   "source": {
+    "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+    "path": "syncfail",
+    "targetRevision": "main"
+   },
+   "destination": {
+    "server": "https://kubernetes.default.svc",
+    "namespace": "ase-syncfail"
+   },
+   "syncPolicy": {
+    "automated": {},
+    "retry": {}
+   }
+  },
+  "operation": {
+   "sync": {
+    "revision": "61951a7ece3c40e7ab02918ecd771172ffef7155"
+   },
+   "initiatedBy": {
+    "automated": true
+   },
+   "retry": {}
+  },
+  "status": {
+   "resources": [
+    {
+     "group": "apps",
+     "version": "v1",
+     "kind": "Deployment",
+     "namespace": "ase-syncfail",
+     "name": "neg",
+     "status": "OutOfSync",
+     "health": {
+      "status": "Missing"
+     }
+    },
+    {
+     "group": "batch",
+     "version": "v1",
+     "kind": "Job",
+     "namespace": "ase-syncfail",
+     "name": "onfail",
+     "health": {
+      "status": "Progressing"
+     },
+     "hook": true,
+     "requiresPruning": true
+    }
+   ],
+   "sync": {
+    "status": "OutOfSync",
+    "revision": "61951a7ece3c40e7ab02918ecd771172ffef7155"
+   },
+   "health": {
+    "status": "Missing"
+   },
+   "reconciledAt": "2026-10-03T08:50:09Z",
+   "operationState": {
+    "operation": {
+     "sync": {
+      "revision": "61951a7ece3c40e7ab02918ecd771172ffef7155"
+     },
+     "initiatedBy": {
+      "automated": true
+     },
+     "retry": {}
+    },
+    "phase": "Running",
+    "message": "waiting for completion of hook batch/Job/onfail",
+    "syncResult": {
+     "resources": [
+      {
+       "group": "apps",
+       "version": "v1",
+       "kind": "Deployment",
+       "namespace": "ase-syncfail",
+       "name": "neg",
+       "status": "SyncFailed",
+       "message": "Deployment.apps \"neg\" is invalid: spec.replicas: Invalid value: -1: must be greater than or equal to 0",
+       "hookPhase": "Failed",
+       "syncPhase": "Sync"
+      },
+      {
+       "group": "batch",
+       "version": "v1",
+       "kind": "Job",
+       "namespace": "ase-syncfail",
+       "name": "onfail",
+       "status": "Synced",
+       "message": "job.batch/onfail created",
+       "hookType": "SyncFail",
+       "hookPhase": "Running",
+       "syncPhase": "SyncFail"
+      }
+     ],
+     "revision": "61951a7ece3c40e7ab02918ecd771172ffef7155",
+     "source": {
+      "repoURL": "http://gitea.git.svc.cluster.local:3000/ase/fixtures.git",
+      "path": "syncfail",
+      "targetRevision": "main"
+     }
+    },
+    "startedAt": "2026-10-03T08:50:09Z"
+   },
+   "resourceHealthSource": "appTree"
+  }
+ },
+ "Project": {
+  "metadata": {
+   "name": "default",
+   "namespace": "argocd"
+  },
+  "spec": {}
+ },
+ "Tree": {
+  "nodes": [
+   {
+    "version": "v1",
+    "kind": "Pod",
+    "namespace": "ase-syncfail",
+    "name": "onfail-8j8v5",
+    "uid": "a73e9114-ed9b-4b14-a17c-0ef77b29a1b0",
+    "parentRefs": [
+     {
+      "group": "batch",
+      "version": "v1",
+      "kind": "Job",
+      "namespace": "ase-syncfail",
+      "name": "onfail",
+      "uid": "77e72ae3-b795-4cef-84a4-87831572037b"
+     }
+    ],
+    "health": {
+     "status": "Progressing"
+    },
+    "info": [
+     {
+      "name": "Status Reason",
+      "value": "ContainerCreating"
+     },
+     {
+      "name": "Node",
+      "value": "ase-v3-5-3-control-plane"
+     },
+     {
+      "name": "Containers",
+      "value": "0/1"
+     },
+     {
+      "name": "cpu",
+      "value": "0"
+     },
+     {
+      "name": "memory",
+      "value": "0"
+     }
+    ]
+   },
+   {
+    "group": "apps",
+    "version": "v1",
+    "kind": "Deployment",
+    "namespace": "ase-syncfail",
+    "name": "neg",
+    "health": {
+     "status": "Missing"
+    }
+   },
+   {
+    "group": "batch",
+    "version": "v1",
+    "kind": "Job",
+    "namespace": "ase-syncfail",
+    "name": "onfail",
+    "uid": "77e72ae3-b795-4cef-84a4-87831572037b",
+    "health": {
+     "status": "Progressing"
+    }
+   }
+  ]
+ },
+ "Events": [
+  {
+   "type": "Normal",
+   "reason": "OperationStarted",
+   "message": "Initiated automated sync to '61951a7ece3c40e7ab02918ecd771172ffef7155'",
+   "lastTimestamp": "2026-10-03T08:50:09Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated sync status:  -\u003e OutOfSync",
+   "lastTimestamp": "2026-10-03T08:50:09Z",
+   "count": 1
+  },
+  {
+   "type": "Normal",
+   "reason": "ResourceUpdated",
+   "message": "Updated health status:  -\u003e Missing",
+   "lastTimestamp": "2026-10-03T08:50:09Z",
+   "count": 1
+  }
+ ],
+ "Live": null,
+ "Children": {},
+ "Unavailable": {}
+}

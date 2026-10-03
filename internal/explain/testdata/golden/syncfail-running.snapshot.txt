@@ -1,0 +1,37 @@
+argocd/ase-syncfail  sync=OutOfSync health=Missing  project=default
+mode: api (Argo CD v3.5.3)
+
+VERDICT: WAITING
+  The sync operation is running and waits on: SyncFail hook Job/onfail. Already failed: Deployment/neg.
+
+Operation: running (phase=Running, automated sync, started 2026-10-03T08:50:09Z)
+  message: waiting for completion of hook batch/Job/onfail
+  position (reconstructed): phase=SyncFail wave=unknown
+    basis: reconstructed from .status.operationState.syncResult.resources (syncPhase of tasks with hookPhase=Running) and .status.resources[].syncWave; Argo CD publishes no phase/wave cursor
+
+Blockers:
+  [waiting-on] hook Job/onfail (ns ase-syncfail)
+      SyncFail hook has not finished; the operation does not start later tasks until it completes
+      syncPhase=SyncFail hookType=SyncFail hookPhase=Running wave=unknown (hook waves are annotations on the manifest, not recorded in the Application)
+      health: Progressing  [resource tree node health]
+      message: job.batch/onfail created
+      source: .status.operationState.syncResult.resources
+  [failed] resource Deployment/neg (ns ase-syncfail)
+      applying (or waiting for the health of) this resource failed
+      syncPhase=Sync hookType=- hookPhase=Failed wave=0
+      health: Missing  [resource tree node health]
+      message: Deployment.apps "neg" is invalid: spec.replicas: Invalid value: -1: must be greater than or equal to 0
+      source: .status.operationState.syncResult.resources
+
+Observations (context, not blockers):
+  under Job/onfail: Pod/onfail-8j8v5 (ns ase-syncfail) health=Progressing Status Reason=ContainerCreating Containers=0/1
+
+OutOfSync resources:
+  Deployment/neg (ns ase-syncfail)  missing: yes (resource health is Missing)
+
+Auto-sync (enabled=true):
+  verified: automated sync is enabled (an `automated` block without `enabled` means enabled)  [.spec.syncPolicy.automated]
+  verified: an operation is already in progress; auto-sync does not start another  [.operation / .status.operationState.phase]
+
+Notes:
+  field-level differences are not shown; run `argocd app diff ase-syncfail`  [-]
